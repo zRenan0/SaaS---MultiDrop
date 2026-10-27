@@ -10,6 +10,8 @@ import { requirePermission } from "@/server/session";
 import { getAccountForOrg } from "@/features/marketplace/accounts";
 import { mlClientForAccount } from "@/server/integrations/mercado-livre/factory";
 import { MlApiError } from "@/server/integrations/mercado-livre/http";
+import { getCurrentPlan } from "@/features/billing/service";
+import { hasFeature } from "@/features/billing/limits";
 
 const LIMITATION =
   "Preços de anúncios ligados ao catálogo do Mercado Livre (endpoint /products/{id}/items). Não inclui anúncios fora do catálogo nem representa o custo do concorrente.";
@@ -19,9 +21,11 @@ export async function searchCompetitorsAction(formData: FormData): Promise<Actio
   return runAction("competitors.search", async () => {
     const ctx = await requirePermission("catalog.write");
     const input = parseInput(z.object({ productId: z.uuid(), accountId: z.uuid("Selecione a conta.") }), formDataToObject(formData));
+    const supabase = await createClient();
+    const plan = await getCurrentPlan(supabase, ctx.organization.id);
+    if (!hasFeature(plan?.features, "competitors")) return { ok: false, error: "A pesquisa de concorrentes não está incluída no seu plano. Veja Plano e uso." };
     const account = await getAccountForOrg(input.accountId, ctx.organization.id);
     if (account.status !== "active") return { ok: false, error: "Conta do Mercado Livre inativa." };
-    const supabase = await createClient();
     const { data: product } = await supabase.from("catalog_products").select("id, title, gtin").eq("id", input.productId).eq("organization_id", ctx.organization.id).maybeSingle();
     if (!product) return { ok: false, error: "Produto não encontrado." };
 

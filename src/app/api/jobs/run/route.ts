@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
   const hour = Math.floor(now / 3_600_000);
   try {
     await enqueue({ organizationId: null, jobType: "listings.reconcile", dedupKey: `cron:listings.reconcile:${tenMinutes}`, maxAttempts: 2 });
+    await enqueue({ organizationId: null, jobType: "billing.usage_snapshot", dedupKey: `cron:usage:${new Date(now).toISOString().slice(0, 10)}`, maxAttempts: 3, priority: 200 });
     const { data: accounts } = await admin.from("marketplace_accounts").select("id, organization_id").eq("status", "active");
     for (const account of accounts ?? []) {
       // Varredura horária respeitando limites da API; notificações cobrem o tempo real.

@@ -1,18 +1,18 @@
 # Progresso
 
 ## Etapa atual
-Etapa 6 (operação comercial: planos, cobrança, painel administrativo).
+Etapa 7 (revisão final).
 
 ## Concluído e verificado
-- Etapas 0 a 5 (ver docs/implementation-plan.md). Etapas 4 e 5 validadas só com servidor simulado; teste real pendente.
+- Etapas 0 a 6 (ver docs/implementation-plan.md). Etapas 4 e 5 validadas só com servidor simulado; teste real pendente.
 
 ## Testes (última execução)
 | Suite | Comando | Resultado |
 |---|---|---|
 | Banco (pgTAP) | `pnpm test:db` | 76/76 aprovados |
-| Unitários | `pnpm test` | 64/64 aprovados |
-| Integração | `pnpm test:integration` | 15/15 aprovados |
-| E2E | `pnpm test:e2e` | 11/11 aprovados (Mercado Livre SIMULADO) |
+| Unitários | `pnpm test` | 69/69 aprovados |
+| Integração | `pnpm test:integration` | 20/20 aprovados |
+| E2E | `pnpm test:e2e` | 13/13 aprovados (Mercado Livre SIMULADO) |
 | Typecheck/Lint | `pnpm typecheck && pnpm lint` | sem erros |
 
 ## Bloqueios externos
@@ -24,9 +24,8 @@ Etapa 6 (operação comercial: planos, cobrança, painel administrativo).
 - Fornecedor com API real: nenhum contrato/documentação disponível.
 
 ## Próxima tarefa concreta
-Etapa 6: página Plano e uso (limites x consumo reais), abstração `BillingProvider` com adaptador `development` (não financeiro,
-bloqueado em produção), webhook de cobrança genérico, painel `/admin` (empresas, assinaturas, saúde da fila, erros) com
-`admin_audit_logs`, métricas operacionais.
+Etapa 7: revisão de RLS/grants de todas as tabelas (pgTAP cobrindo tabelas novas), revisão das rotas públicas, varredura de
+dependências, README de instalação, lista final de bloqueios para produção.
 
 ## Testes reais pendentes (precisam de credenciais)
 - Conectar conta de teste do Mercado Livre, consultar /users/me, confirmar tag `user_product_seller`.

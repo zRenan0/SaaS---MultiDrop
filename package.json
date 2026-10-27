@@ -16,7 +16,8 @@
     "db:start": "supabase start",
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
-    "db:types": "supabase gen types typescript --local --schema public > src/types/database.ts"
+    "db:types": "supabase gen types typescript --local --schema public > src/types/database.ts",
+    "admin:grant": "node scripts/grant-platform-admin.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^6.0.1",

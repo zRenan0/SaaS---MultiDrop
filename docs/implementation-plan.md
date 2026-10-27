@@ -49,7 +49,14 @@ Status: [x] concluído e verificado · [~] parcial · [ ] pendente · [B] bloque
 - [~] Integração automática de pedidos com fornecedor: contrato `SupplierAdapter.createOrder` pronto; nenhum fornecedor com API
 
 ## Etapa 6: operação comercial
-- [ ] Planos e limites (banco já aplica), página de assinatura, billing provider, painel administrativo, métricas, documentação legal
+- [x] Planos configuráveis e limites aplicados no banco; recursos por plano verificados no servidor
+- [x] Página Plano e uso com consumo real, troca/cancelamento de plano e histórico
+- [x] Abstração `BillingProvider`: `none` e `development` (não financeiro, bloqueado em produção); webhook genérico só responde com provedor real
+- [B] Provedor de pagamento real (decisão comercial pendente) — passos em docs/billing.md
+- [x] Painel do operador `/admin` (404 para não administradores): métricas reais, empresas, suspensão/reativação com motivo, plano interno, tarefas esgotadas
+- [x] Auditoria do operador (`admin_audit_logs`), script `pnpm admin:grant`
+- [x] Exportação de dados pelo proprietário; snapshot mensal de uso
+- [x] Documentação: billing, privacidade, suporte, testes, deploy
 
 ## Etapa 7: revisão final
 - [ ] Todos os testes, revisão de RLS e rotas públicas, deploy documentado, lista de pendências

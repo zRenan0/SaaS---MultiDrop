@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { AdminSupabaseClient } from "@/lib/supabase/admin";
 import { asJson } from "@/lib/db-values";
 import { ingestOrder, loadAccount } from "@/features/orders/ingest";
+import { getUsage } from "@/features/billing/service";
 import { mlClientForAccount } from "@/server/integrations/mercado-livre/factory";
 import { MlApiError } from "@/server/integrations/mercado-livre/http";
 import { JobError, type JobHandler } from "@/server/jobs/types";
@@ -185,7 +186,32 @@ const listingsReconcile: JobHandler = async (_job, { admin, enqueue }) => {
   return { scheduled };
 };
 
+/** Registra o consumo do mês de cada empresa ativa em usage_records (histórico para cobrança e suporte). */
+const usageSnapshot: JobHandler = async (_job, { admin }) => {
+  const now = new Date();
+  const periodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const periodEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+  const { data: orgs } = await admin.from("organizations").select("id").eq("status", "active").limit(5000);
+  let written = 0;
+  for (const org of orgs ?? []) {
+    const usage = await getUsage(admin, org.id);
+    const rows = Object.entries(usage).map(([metric, quantity]) => ({
+      organization_id: org.id,
+      metric: metric.replace(/^max_/, ""),
+      quantity,
+      period_start: periodStart.toISOString(),
+      period_end: periodEnd.toISOString(),
+      metadata: { captured_at: now.toISOString() },
+    }));
+    const { error } = await admin.from("usage_records").upsert(rows, { onConflict: "organization_id,metric,period_start" });
+    if (error) throw error;
+    written += rows.length;
+  }
+  return { organizations: orgs?.length ?? 0, written };
+};
+
 export const jobHandlers: Record<string, JobHandler> = {
+  "billing.usage_snapshot": usageSnapshot,
   "ml.notification": notification,
   "ml.order.sync": orderSync,
   "ml.orders.poll": ordersPoll,

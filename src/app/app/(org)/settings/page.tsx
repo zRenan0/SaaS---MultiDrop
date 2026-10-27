@@ -123,6 +123,23 @@ export default async function SettingsPage() {
           </CardContent>
         </Card>
 
+        {can(ctx.role, "billing.manage") ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Dados da empresa</CardTitle>
+              <CardDescription>
+                Exporte todos os dados da empresa em JSON (portabilidade). Tokens e credenciais nunca são exportados. Para excluir a empresa e
+                seus dados, solicite ao suporte: a exclusão é definitiva.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <a href="/app/settings/export" className="text-sm font-medium text-primary underline-offset-4 hover:underline" download>
+                Baixar exportação (JSON)
+              </a>
+            </CardContent>
+          </Card>
+        ) : null}
+
         {can(ctx.role, "audit.view") ? (
           <Card>
             <CardHeader>
