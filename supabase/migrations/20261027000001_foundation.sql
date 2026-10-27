@@ -159,6 +159,10 @@ $$;
 create trigger on_auth_user_created after insert on auth.users
   for each row execute function private.handle_new_user();
 
+-- Permite listar membros com nome/e-mail via API (o perfil sempre existe antes da associação).
+alter table public.organization_members
+  add constraint organization_members_profile_fk foreign key (user_id) references public.profiles(id) on delete cascade;
+
 create or replace function private.handle_user_email_change()
 returns trigger
 language plpgsql
