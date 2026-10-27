@@ -856,6 +856,34 @@ isOneToOne: false
 "fail_sync_job":
 { Args: { "p_backoff_seconds"?: number,"p_error": string,"p_job_id": string,"p_retryable": boolean,"p_worker": string }; Returns: Database["public"]['Enums']["job_status"]
                            },
+"mp_claim_refresh":
+{ Args: { "p_account_id": string,"p_generation": number,"p_lease_seconds": number }; Returns: boolean
+                           },
+"mp_complete_refresh":
+{ Args: { "p_access": string,"p_account_id": string,"p_expected_generation": number,"p_expires_at": string,"p_key_version": number,"p_refresh": string }; Returns: boolean
+                           },
+"mp_delete_credentials":
+{ Args: { "p_account_id": string }; Returns: undefined
+                           },
+"mp_get_credentials":
+{ Args: { "p_account_id": string }; Returns: {
+              "encrypted_access_token": string,"encrypted_refresh_token": string,"encryption_key_version": number,"expires_at": string,"organization_id": string,"refresh_locked_until": string,"token_generation": number
+            }[]
+                           },
+"mp_release_refresh":
+{ Args: { "p_account_id": string }; Returns: undefined
+                           },
+"mp_store_credentials":
+{ Args: { "p_access": string,"p_account_id": string,"p_expires_at": string,"p_key_version": number,"p_organization_id": string,"p_refresh": string }; Returns: number
+                           },
+"oauth_state_consume":
+{ Args: { "p_state_hash": string,"p_user_id": string }; Returns: {
+              "encrypted_code_verifier": string,"encryption_key_version": number,"marketplace": string,"organization_id": string
+            }[]
+                           },
+"oauth_state_create":
+{ Args: { "p_key_version": number,"p_marketplace": string,"p_organization_id": string,"p_state_hash": string,"p_ttl_seconds": number,"p_user_id": string,"p_verifier": string }; Returns: undefined
+                           },
 "organization_plan":
 { Args: { "org": string }; Returns: {
               "features": Json,"limits": Json,"plan_code": string,"plan_name": string

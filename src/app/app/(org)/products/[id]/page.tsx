@@ -14,6 +14,7 @@ import { formatDateTime, isOlderThan } from "@/lib/dates";
 import { AddOfferForm, DeleteProductButton, EditOfferDialog } from "@/features/catalog/components/product-forms";
 import { can } from "@/features/organizations/roles";
 import { requireOrgContext } from "@/server/session";
+import { CompetitorSearchForm } from "@/features/competitors/components";
 
 export const metadata: Metadata = { title: "Produto" };
 
@@ -39,6 +40,18 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
     .eq("organization_id", ctx.organization.id)
     .neq("status", "disabled")
     .order("display_name");
+
+  const [{ data: competitors }, { data: mlAccounts }] = await Promise.all([
+    supabase
+      .from("competitor_snapshots")
+      .select("id, external_item_id, title, observed_price, observed_at, source, metadata")
+      .eq("organization_id", ctx.organization.id)
+      .eq("catalog_product_id", product.id)
+      .order("observed_at", { ascending: false })
+      .limit(30),
+    supabase.from("marketplace_accounts").select("id, nickname, external_account_id").eq("organization_id", ctx.organization.id).eq("status", "active"),
+  ]);
+  const competitorPrices = (competitors ?? []).map((c) => Number(c.observed_price)).sort((a, b) => a - b);
 
   const images = (Array.isArray(product.images) ? product.images : []) as { url?: string; authorized?: boolean }[];
   const canWrite = can(ctx.role, "catalog.write");
@@ -139,6 +152,41 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
             </CardContent>
           </Card>
         ) : null}
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Preços observados no Mercado Livre</CardTitle>
+            <CardDescription>
+              Fonte: catálogo oficial do Mercado Livre, consultado com o token da sua conta. Não inclui anúncios fora do catálogo; preço observado não é o custo do concorrente.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 text-sm">
+            {competitorPrices.length > 0 ? (
+              <>
+                <p>
+                  {competitorPrices.length} observação(ões) · menor {formatBRL(competitorPrices[0])} · mediana {formatBRL(competitorPrices[Math.floor(competitorPrices.length / 2)])} · última em{" "}
+                  {formatDateTime(competitors?.[0]?.observed_at)}
+                </p>
+                <ul className="grid gap-1">
+                  {(competitors ?? []).slice(0, 10).map((c) => (
+                    <li key={c.id} className="flex flex-wrap justify-between gap-2 border-b py-1">
+                      <span className="font-mono text-xs">{c.external_item_id}</span>
+                      <span>{formatBRL(c.observed_price)}</span>
+                      <span className="text-muted-foreground">{formatDateTime(c.observed_at)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <p className="text-muted-foreground">Nenhuma observação registrada.</p>
+            )}
+            {canWrite && mlAccounts && mlAccounts.length > 0 ? (
+              <CompetitorSearchForm productId={product.id} accounts={mlAccounts.map((a) => ({ id: a.id, label: a.nickname ?? a.external_account_id }))} />
+            ) : (
+              <p className="text-xs text-muted-foreground">Conecte uma conta do Mercado Livre para pesquisar.</p>
+            )}
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>

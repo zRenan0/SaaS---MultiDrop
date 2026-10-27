@@ -34,3 +34,17 @@ Decisão: `papaparse` (CSV) e `read-excel-file` (XLSX). Descartado: pacote `xlsx
 ## ADR-010 Cobrança
 Decisão: abstração `BillingProvider` com adaptador `development` (não financeiro, bloqueado em produção) e nenhum provedor real escolhido.
 Motivo: escolha comercial pendente (Stripe, Asaas, Mercado Pago, Pagar.me). Preços dos planos ficam nulos ("a definir").
+
+## ADR-011 Servidor simulado do Mercado Livre para E2E
+Decisão: `tests/mocks/mercado-livre-server.mjs` imita o formato documentado; o Next.js de testes roda isolado (porta 3100, `.next-e2e`)
+com `ML_API_BASE_URL`/`ML_AUTH_BASE_URL` apontando para ele. As variáveis de sobrescrita são recusadas em produção.
+Esses testes provam o fluxo da aplicação, não a integração real.
+
+## ADR-012 Publicação síncrona e reconciliação
+Decisão: publicar na própria Server Action (operação iniciada e confirmada pelo usuário), com transição atômica `validated → publishing`
+(compare-and-swap na versão) e sem retentativa automática do POST. Em resultado incerto (timeout/5xx) busca o item pelo SKU do vendedor;
+sem confirmação, marca falha com aviso explícito para conferir no Mercado Livre antes de repetir.
+
+## ADR-013 Renovação de token com lease + CAS
+Decisão: coluna `refresh_locked_until` (lease de 30 s) e `token_generation` (compare-and-swap). Garante uma única chamada de renovação
+por geração mesmo com várias funções serverless simultâneas; testado com banco real.

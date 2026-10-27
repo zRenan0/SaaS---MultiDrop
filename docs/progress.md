@@ -1,18 +1,18 @@
 # Progresso
 
 ## Etapa atual
-Etapa 4 (Mercado Livre): pesquisa de documentação iniciada, código ainda não escrito.
+Etapa 5 (pedidos, webhooks e sincronização).
 
 ## Concluído e verificado
-- Etapas 0, 1, 2 e 3 (ver docs/implementation-plan.md).
+- Etapas 0 a 4 (ver docs/implementation-plan.md). Etapa 4 validada só com servidor simulado; teste real pendente.
 
 ## Testes (última execução)
 | Suite | Comando | Resultado |
 |---|---|---|
 | Banco (pgTAP) | `pnpm test:db` | 76/76 aprovados |
-| Unitários | `pnpm test` | 42/42 aprovados |
-| Integração | `pnpm test:integration` | 5/5 aprovados |
-| E2E | `pnpm test:e2e` | 8/8 aprovados (desktop + mobile) |
+| Unitários | `pnpm test` | 61/61 aprovados |
+| Integração | `pnpm test:integration` | 10/10 aprovados |
+| E2E | `pnpm test:e2e` | 10/10 aprovados (inclui Mercado Livre SIMULADO) |
 | Typecheck/Lint | `pnpm typecheck && pnpm lint` | sem erros |
 
 ## Bloqueios externos
@@ -24,10 +24,11 @@ Etapa 4 (Mercado Livre): pesquisa de documentação iniciada, código ainda não
 - Fornecedor com API real: nenhum contrato/documentação disponível.
 
 ## Próxima tarefa concreta
-Etapa 4: escrever docs/integrations.md e implementar OAuth do Mercado Livre (state + PKCE, tokens cifrados, renovação com CAS em token_generation).
-Notas da pesquisa (páginas oficiais retornam 403 para busca automatizada; confirmar com conta de teste):
-- Token: POST https://api.mercadolibre.com/oauth/token (x-www-form-urlencoded); access token ~6h; refresh token deve ser substituído a cada renovação.
-- Vendedores com tag `user_product_seller` (GET /users/me) publicam no modelo User Products: `family_name` obrigatório, sem `variations`, título gerado pelo ML.
-- Validação prévia: POST /items/validate. Tarifas: GET /sites/MLB/listing_prices?price=&listing_type_id=&category_id=.
-- Notificações: payload com _id, resource, user_id, topic, application_id, attempts; tópico recomendado `orders_v2`; responder 200 rápido e consultar o recurso.
-- Concorrência: relatos de 403 em /sites/MLB/search e /items de outros vendedores; usar /products/search e /products/{id}/items (catálogo) e registrar a limitação.
+Etapa 5: rota pública `/api/webhooks/mercado-livre` (validação, rate limit, deduplicação em `webhook_events`, enfileiramento),
+executor da fila `/api/jobs/run` (Vercel Cron + CRON_SECRET), handler `orders_v2` (consulta /orders/{id}, grava pedido e itens,
+liga itens a anúncios/ofertas), sincronização de estoque anúncio ← oferta, tela de pedidos e encaminhamento manual ao fornecedor.
+
+## Testes reais pendentes (precisam de credenciais)
+- Conectar conta de teste do Mercado Livre, consultar /users/me, confirmar tag `user_product_seller`.
+- /items/validate e POST /items com usuário de teste; confirmar formato de listing_prices para MLB.
+- Renovação de token real (confirmar rotação do refresh token) e busca por `seller_sku`.

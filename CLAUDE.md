@@ -14,6 +14,7 @@ Tailwind 4, shadcn/ui (radix), Supabase (Auth + Postgres + RLS), Zod 4, decimal.
 - `pnpm db:start` sobe Supabase local (Docker). `pnpm db:reset` reaplica migrações. `pnpm db:types` regenera `src/types/database.ts`.
 - `pnpm dev`, `pnpm typecheck`, `pnpm lint`, `pnpm test` (unit), `pnpm test:db` (pgTAP), `pnpm test:integration`, `pnpm test:e2e`.
 - `pnpm test:all` roda tudo. Rode antes de cada commit relevante.
+- E2E sobe Next.js isolado na porta 3100 (`.next-e2e`) e o Mercado Livre SIMULADO na 4010 (`tests/mocks`). Nunca trate esses testes como prova de integração real.
 
 ## Regras de código
 - Organização por domínio em `src/features/<domínio>`; integrações externas em `src/server/integrations`; UI genérica em `src/components`.

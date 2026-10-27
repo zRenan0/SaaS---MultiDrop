@@ -49,7 +49,28 @@ export type MercadoLivreConfig = {
   redirectUri: string;
   siteId: string;
   usePkce: boolean;
+  apiBaseUrl: string;
+  authBaseUrl: string;
 };
+
+const AUTH_BASE_BY_SITE: Record<string, string> = {
+  MLB: "https://auth.mercadolivre.com.br",
+  MLA: "https://auth.mercadolibre.com.ar",
+  MLM: "https://auth.mercadolibre.com.mx",
+};
+
+/** URLs do Mercado Livre. Sobrescrita só é aceita fora de produção (servidor simulado de testes). */
+function mercadoLivreBaseUrls(siteId: string): { apiBaseUrl: string; authBaseUrl: string } {
+  const overrideApi = process.env.ML_API_BASE_URL;
+  const overrideAuth = process.env.ML_AUTH_BASE_URL;
+  if ((overrideApi || overrideAuth) && isProduction()) {
+    throw new Error("ML_API_BASE_URL/ML_AUTH_BASE_URL não podem ser usadas em produção.");
+  }
+  return {
+    apiBaseUrl: overrideApi || "https://api.mercadolibre.com",
+    authBaseUrl: overrideAuth || AUTH_BASE_BY_SITE[siteId] || AUTH_BASE_BY_SITE.MLB,
+  };
+}
 
 export function mercadoLivreConfigStatus(): { configured: boolean; missing: string[] } {
   const required = ["ML_CLIENT_ID", "ML_CLIENT_SECRET", "ML_REDIRECT_URI", "TOKEN_ENCRYPTION_KEYS", "SUPABASE_SECRET_KEY"];
@@ -67,6 +88,7 @@ export function mercadoLivreConfig(): MercadoLivreConfig {
     redirectUri: parsed.ML_REDIRECT_URI,
     siteId: parsed.ML_SITE_ID,
     usePkce: parsed.ML_USE_PKCE === "true",
+    ...mercadoLivreBaseUrls(parsed.ML_SITE_ID),
   };
 }
 

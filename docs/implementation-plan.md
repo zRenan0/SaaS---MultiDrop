@@ -29,10 +29,12 @@ Status: [x] concluído e verificado · [~] parcial · [ ] pendente · [B] bloque
 - [x] Bloqueio de resultado quando faltam parâmetros; sinalização de estimativas e dados desatualizados
 
 ## Etapa 4: Mercado Livre
-- [ ] Documentação de endpoints (docs/integrations.md)
-- [ ] OAuth (state, PKCE), credenciais cifradas, renovação com CAS, desconexão
-- [ ] Consulta da conta, categorias, atributos, tarifas oficiais
-- [ ] Rascunho, validação, prévia, publicação controlada e consulta posterior
+- [x] Documentação de endpoints e requisitos (docs/integrations.md) — itens (V) pendentes de confirmação com conta real
+- [x] OAuth (state de uso único + cookie, PKCE S256), credenciais cifradas no schema private, renovação com lease + CAS, reautorização, desconexão
+- [x] Consulta da conta (modelo User Products pela tag), sugestão de categoria, atributos obrigatórios, tipos de anúncio, tarifa oficial registrada
+- [x] Rascunho, validação local + /items/validate, prévia, lucro com tarifa oficial, publicação com papel admin + "PUBLICAR" + diálogo, reconciliação por SKU em resultado incerto, consulta posterior
+- [x] Pesquisa de preços no catálogo oficial com fonte, data e limitação
+- [B] Teste real com aplicação e usuário de teste do Mercado Livre (aguarda credenciais)
 
 ## Etapa 5: pedidos e sincronização
 - [ ] Webhook, deduplicação, fila, consulta de pedidos, sincronização de estoque/preço, tela de pedidos, encaminhamento manual

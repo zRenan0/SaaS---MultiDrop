@@ -12,6 +12,8 @@ const nextConfig: NextConfig = {
   // Painel autenticado: todas as páginas dependem da sessão. Ver docs/decisions.md (ADR-004).
   cacheComponents: false,
   poweredByHeader: false,
+  // Diretório separado permite um servidor de testes E2E isolado (ver playwright.config.ts).
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   experimental: {
     serverActions: { bodySizeLimit: "6mb" },
   },
