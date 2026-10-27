@@ -519,7 +519,7 @@ isOneToOne: false
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"created_by"?: string | null,"effective_at"?: string,"id"?: string,"organization_id": string,"profile_id": string,"rules": NonNullable<Json>,"source"?: string,"version": number
+                    "created_at"?: string,"created_by"?: string | null,"effective_at"?: string,"id"?: string,"organization_id": string,"profile_id": string,"rules": NonNullable<Json>,"source"?: string,"version"?: number
                   }
                   Update: {
                     "created_at"?: string,"created_by"?: string | null,"effective_at"?: string,"id"?: string,"organization_id"?: string,"profile_id"?: string,"rules"?: NonNullable<Json>,"source"?: string,"version"?: number

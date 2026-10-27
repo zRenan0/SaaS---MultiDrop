@@ -24,8 +24,9 @@ Status: [x] concluído e verificado · [~] parcial · [ ] pendente · [B] bloque
 - [x] Listagem com busca (título, marca, SKU, GTIN), filtros (fornecedor, sem estoque), ordenação e paginação
 
 ## Etapa 3: calculadora
-- [ ] Motor determinístico + testes com cálculo independente
-- [ ] Perfis, versões de regra, tarifas com fonte/data, cenários, comparação de fornecedores, histórico
+- [x] Motor determinístico com faixas de preço + testes com cálculo independente (docs/pricing.md)
+- [x] Perfis, versões imutáveis de regra, tarifas com fonte/data, cenários, comparação de fornecedores, histórico
+- [x] Bloqueio de resultado quando faltam parâmetros; sinalização de estimativas e dados desatualizados
 
 ## Etapa 4: Mercado Livre
 - [ ] Documentação de endpoints (docs/integrations.md)

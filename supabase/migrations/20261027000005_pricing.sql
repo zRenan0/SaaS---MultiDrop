@@ -25,7 +25,8 @@ create table public.pricing_rule_versions (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations(id) on delete cascade,
   profile_id uuid not null,
-  version integer not null check (version > 0),
+  -- Atribuída pelo trigger next_pricing_rule_version (o valor enviado pelo cliente é ignorado).
+  version integer not null default 0 check (version > 0),
   rules jsonb not null check (jsonb_typeof(rules) = 'object'),
   effective_at timestamptz not null default now(),
   source text not null default 'user' check (source in ('user', 'system')),
