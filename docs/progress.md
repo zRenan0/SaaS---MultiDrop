@@ -1,17 +1,18 @@
 # Progresso
 
 ## Etapa atual
-Etapa 2 (catálogo multifonte).
+Etapa 4 (Mercado Livre): pesquisa de documentação iniciada, código ainda não escrito.
 
 ## Concluído e verificado
-- Etapa 0 e Etapa 1 (ver docs/implementation-plan.md).
+- Etapas 0, 1, 2 e 3 (ver docs/implementation-plan.md).
 
 ## Testes (última execução)
 | Suite | Comando | Resultado |
 |---|---|---|
 | Banco (pgTAP) | `pnpm test:db` | 76/76 aprovados |
-| Unitários | `pnpm test` | 20/20 aprovados |
-| E2E | `pnpm test:e2e` | 6/6 aprovados (desktop + mobile) |
+| Unitários | `pnpm test` | 42/42 aprovados |
+| Integração | `pnpm test:integration` | 5/5 aprovados |
+| E2E | `pnpm test:e2e` | 8/8 aprovados (desktop + mobile) |
 | Typecheck/Lint | `pnpm typecheck && pnpm lint` | sem erros |
 
 ## Bloqueios externos
@@ -23,4 +24,10 @@ Etapa 2 (catálogo multifonte).
 - Fornecedor com API real: nenhum contrato/documentação disponível.
 
 ## Próxima tarefa concreta
-Implementar conexões de fornecedor e cadastro manual de produto + oferta (Etapa 2).
+Etapa 4: escrever docs/integrations.md e implementar OAuth do Mercado Livre (state + PKCE, tokens cifrados, renovação com CAS em token_generation).
+Notas da pesquisa (páginas oficiais retornam 403 para busca automatizada; confirmar com conta de teste):
+- Token: POST https://api.mercadolibre.com/oauth/token (x-www-form-urlencoded); access token ~6h; refresh token deve ser substituído a cada renovação.
+- Vendedores com tag `user_product_seller` (GET /users/me) publicam no modelo User Products: `family_name` obrigatório, sem `variations`, título gerado pelo ML.
+- Validação prévia: POST /items/validate. Tarifas: GET /sites/MLB/listing_prices?price=&listing_type_id=&category_id=.
+- Notificações: payload com _id, resource, user_id, topic, application_id, attempts; tópico recomendado `orders_v2`; responder 200 rápido e consultar o recurso.
+- Concorrência: relatos de 403 em /sites/MLB/search e /items de outros vendedores; usar /products/search e /products/{id}/items (catálogo) e registrar a limitação.
