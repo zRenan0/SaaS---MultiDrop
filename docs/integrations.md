@@ -46,6 +46,13 @@ para este fluxo; os controles adotados são:
    pertence a uma conta conectada;
 5. limitar requisições por IP.
 
+### Processamento de notificações
+- `POST /api/webhooks/mercado-livre` grava `webhook_events` (único por `_id`), associa à conta pelo `user_id` e enfileira `ml.notification`
+  com chave `ml:notification:{conta}:{recurso}` (notificações repetidas do mesmo recurso viram uma tarefa).
+- Tópicos tratados: `orders_v2` → `GET /orders/{id}` + ingestão; `items` → `GET /items/{id}`; `shipments` → `GET /shipments/{id}`.
+- Retorno 500 apenas em falha interna (para o ML reenviar); payload inválido 400; demais 200.
+- Varredura `ml.orders.poll` (`GET /orders/search?seller=`) a cada hora por conta ativa.
+
 ### Concorrência (pesquisa de preços)
 Relatos de desenvolvedores indicam 403 em `/sites/MLB/search` e em `/items` de outros vendedores. A aplicação usa somente o
 catálogo (`/products/search`, `/products/{id}/items`) com token do vendedor, registra fonte, data e limitações, e não copia

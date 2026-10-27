@@ -13,6 +13,7 @@ const codes = new Map(); // code -> { challenge, redirectUri }
 const accessTokens = new Map(); // token -> usuário
 const refreshTokens = new Map();
 const items = new Map();
+const orders = new Map();
 let itemSeq = 9000000000;
 
 function send(res, status, body) {
@@ -47,6 +48,18 @@ const server = createServer(async (req, res) => {
   if (path === "/__mock/next-user" && req.method === "POST") {
     nextUser = { site_id: "MLB", tags: ["normal"], ...JSON.parse(await readBody(req)) };
     return send(res, 200, nextUser);
+  }
+
+  // Cria um item já existente (anúncio semeado pelo teste) e pedidos simulados.
+  if (path === "/__mock/items" && req.method === "POST") {
+    const item = JSON.parse(await readBody(req));
+    items.set(item.id, { status: "active", permalink: null, ...item });
+    return send(res, 201, items.get(item.id));
+  }
+  if (path === "/__mock/orders" && req.method === "POST") {
+    const order = JSON.parse(await readBody(req));
+    orders.set(String(order.id), order);
+    return send(res, 201, order);
   }
 
   if (path === "/authorization" && req.method === "GET") {
@@ -138,6 +151,19 @@ const server = createServer(async (req, res) => {
     items.set(id, item);
     return send(res, 201, item);
   }
+  const orderMatch = /^\/orders\/(\d+)$/.exec(path);
+  if (orderMatch) {
+    const order = orders.get(orderMatch[1]);
+    if (!order) return send(res, 404, { error: "not_found" });
+    if (String(order.seller.id) !== String(user.id)) return send(res, 403, { error: "forbidden", message: "order belongs to another seller" });
+    return send(res, 200, order);
+  }
+  if (path === "/orders/search") {
+    const results = [...orders.values()].filter((o) => String(o.seller.id) === String(user.id));
+    return send(res, 200, { results, paging: { total: results.length } });
+  }
+  const shipmentMatch = /^\/shipments\/(\d+)$/.exec(path);
+  if (shipmentMatch) return send(res, 200, { id: Number(shipmentMatch[1]), status: "ready_to_ship", substatus: null, tracking_number: null });
   const descriptionMatch = /^\/items\/(MLB\d+)\/description$/.exec(path);
   if (descriptionMatch && req.method === "POST") return send(res, 201, { plain_text: "ok" });
   const itemMatch = /^\/items\/(MLB\d+)$/.exec(path);

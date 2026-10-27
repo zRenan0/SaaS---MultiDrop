@@ -37,7 +37,16 @@ Status: [x] concluído e verificado · [~] parcial · [ ] pendente · [B] bloque
 - [B] Teste real com aplicação e usuário de teste do Mercado Livre (aguarda credenciais)
 
 ## Etapa 5: pedidos e sincronização
-- [ ] Webhook, deduplicação, fila, consulta de pedidos, sincronização de estoque/preço, tela de pedidos, encaminhamento manual
+- [x] Webhook público `/api/webhooks/mercado-livre`: validação Zod + application_id, rate limit, limite de tamanho, deduplicação por evento, aglutinação por recurso
+- [x] Fila durável em Postgres com lease, backoff exponencial (30 s → 1 h), tarefas abandonadas recuperadas, falha permanente registrada em integration_errors, reprocessamento manual
+- [x] Executor agendado `/api/jobs/run` (Vercel Cron a cada 5 min, `CRON_SECRET`) + execução oportunista após notificações (`after`)
+- [x] Ingestão idempotente de pedidos (`ingest_marketplace_order`): valida vendedor, vincula itens a anúncios/ofertas, baixa de estoque única, devolução no cancelamento, problemas para o operador
+- [x] Varredura horária de vendas recentes (notificações perdidas) e botão manual
+- [x] Sincronização de estoque anúncio ← oferta (pausa sem estoque, reativa só o que pausou), reconciliação periódica, controle otimista
+- [x] Tela de pedidos (filtros, paginação) e detalhe com encaminhamento manual: pedido de compra com máquina de estados, número no fornecedor, rastreio
+- [x] Tela de Operações: erros pendentes, fila, notificações, reprocessamento
+- [x] 401 do Mercado Livre com token válido marca a conta para reautorização
+- [~] Integração automática de pedidos com fornecedor: contrato `SupplierAdapter.createOrder` pronto; nenhum fornecedor com API
 
 ## Etapa 6: operação comercial
 - [ ] Planos e limites (banco já aplica), página de assinatura, billing provider, painel administrativo, métricas, documentação legal

@@ -19,5 +19,10 @@ export function mlClientForAccount(accountId: string, siteId: string) {
   const config = mercadoLivreConfig();
   const http = new MlHttpClient({ baseUrl: config.apiBaseUrl });
   const store = createDbCredentialStore(createAdminClient());
-  return new MercadoLivreClient(http, () => getValidAccessToken(accountId, store, (rt) => refreshAccessToken(http, config, rt)), siteId);
+  return new MercadoLivreClient(
+    http,
+    () => getValidAccessToken(accountId, store, (rt) => refreshAccessToken(http, config, rt)),
+    siteId,
+    () => store.markReauthorizationRequired(accountId, "O Mercado Livre recusou o token de acesso (autorização revogada ou inválida). Conecte a conta novamente."),
+  );
 }

@@ -1,18 +1,18 @@
 # Progresso
 
 ## Etapa atual
-Etapa 5 (pedidos, webhooks e sincronização).
+Etapa 6 (operação comercial: planos, cobrança, painel administrativo).
 
 ## Concluído e verificado
-- Etapas 0 a 4 (ver docs/implementation-plan.md). Etapa 4 validada só com servidor simulado; teste real pendente.
+- Etapas 0 a 5 (ver docs/implementation-plan.md). Etapas 4 e 5 validadas só com servidor simulado; teste real pendente.
 
 ## Testes (última execução)
 | Suite | Comando | Resultado |
 |---|---|---|
 | Banco (pgTAP) | `pnpm test:db` | 76/76 aprovados |
-| Unitários | `pnpm test` | 61/61 aprovados |
-| Integração | `pnpm test:integration` | 10/10 aprovados |
-| E2E | `pnpm test:e2e` | 10/10 aprovados (inclui Mercado Livre SIMULADO) |
+| Unitários | `pnpm test` | 64/64 aprovados |
+| Integração | `pnpm test:integration` | 15/15 aprovados |
+| E2E | `pnpm test:e2e` | 11/11 aprovados (Mercado Livre SIMULADO) |
 | Typecheck/Lint | `pnpm typecheck && pnpm lint` | sem erros |
 
 ## Bloqueios externos
@@ -24,11 +24,13 @@ Etapa 5 (pedidos, webhooks e sincronização).
 - Fornecedor com API real: nenhum contrato/documentação disponível.
 
 ## Próxima tarefa concreta
-Etapa 5: rota pública `/api/webhooks/mercado-livre` (validação, rate limit, deduplicação em `webhook_events`, enfileiramento),
-executor da fila `/api/jobs/run` (Vercel Cron + CRON_SECRET), handler `orders_v2` (consulta /orders/{id}, grava pedido e itens,
-liga itens a anúncios/ofertas), sincronização de estoque anúncio ← oferta, tela de pedidos e encaminhamento manual ao fornecedor.
+Etapa 6: página Plano e uso (limites x consumo reais), abstração `BillingProvider` com adaptador `development` (não financeiro,
+bloqueado em produção), webhook de cobrança genérico, painel `/admin` (empresas, assinaturas, saúde da fila, erros) com
+`admin_audit_logs`, métricas operacionais.
 
 ## Testes reais pendentes (precisam de credenciais)
 - Conectar conta de teste do Mercado Livre, consultar /users/me, confirmar tag `user_product_seller`.
 - /items/validate e POST /items com usuário de teste; confirmar formato de listing_prices para MLB.
 - Renovação de token real (confirmar rotação do refresh token) e busca por `seller_sku`.
+- Notificações reais `orders_v2`/`items`/`shipments` na URL pública; consulta /orders/{id} e /orders/search; PUT de estoque em item User Products.
+- Vercel Cron: plano Hobby só permite execução diária; para a cada 5 min é necessário plano Pro (ou agendador externo chamando `/api/jobs/run` com `CRON_SECRET`).

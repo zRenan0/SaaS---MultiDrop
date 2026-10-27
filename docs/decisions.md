@@ -48,3 +48,12 @@ sem confirmação, marca falha com aviso explícito para conferir no Mercado Liv
 ## ADR-013 Renovação de token com lease + CAS
 Decisão: coluna `refresh_locked_until` (lease de 30 s) e `token_generation` (compare-and-swap). Garante uma única chamada de renovação
 por geração mesmo com várias funções serverless simultâneas; testado com banco real.
+
+## ADR-014 Ingestão de pedidos em função SQL
+Decisão: `ingest_marketplace_order` (service role) faz em uma transação: validação do vendedor, upsert do pedido e itens,
+baixa de estoque única (flag em metadata), devolução no cancelamento e cálculo do andamento. Evita corridas entre notificações
+repetidas, varredura e sincronização de estoque. O conteúdo vem sempre da API oficial, nunca da notificação.
+
+## ADR-015 Sem dados pessoais do comprador
+Decisão: guardar apenas apelido do comprador e IDs de envio. Endereço e etiqueta permanecem no painel do Mercado Livre.
+Reduz risco LGPD; o encaminhamento manual usa o painel do ML para dados de entrega.

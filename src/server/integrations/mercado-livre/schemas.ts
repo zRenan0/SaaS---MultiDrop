@@ -144,3 +144,14 @@ export const catalogItemsSchema = z.object({
     )
     .default([]),
 });
+
+export const shipmentSchema = z.object({
+  id: z.union([z.number(), z.string()]).transform(String),
+  status: z.string(),
+  substatus: z.string().nullable().optional(),
+  tracking_number: z.string().nullable().optional(),
+  tracking_method: z.string().nullable().optional(),
+  logistic_type: z.string().nullable().optional(),
+  order_id: z.union([z.number(), z.string()]).nullable().optional().transform((v) => (v == null ? null : String(v))),
+});
+export type MlShipment = z.infer<typeof shipmentSchema>;

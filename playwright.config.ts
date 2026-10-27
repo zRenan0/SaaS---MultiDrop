@@ -46,6 +46,7 @@ export default defineConfig({
         ML_API_BASE_URL: "http://localhost:4010",
         ML_AUTH_BASE_URL: "http://localhost:4010",
         ML_USE_PKCE: "true",
+        CRON_SECRET: "e2e-cron-secret-0123456789abcdef",
       },
     },
   ],

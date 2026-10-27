@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MlHttpClient } from "@/server/integrations/mercado-livre/http";
+import { MlApiError, MlHttpClient } from "@/server/integrations/mercado-livre/http";
 import {
   catalogItemsSchema,
   catalogSearchSchema,
@@ -10,6 +10,7 @@ import {
   listingPriceSchema,
   listingTypesSchema,
   orderSchema,
+  shipmentSchema,
   userSchema,
 } from "@/server/integrations/mercado-livre/schemas";
 
@@ -19,10 +20,21 @@ export class MercadoLivreClient {
     private readonly http: MlHttpClient,
     private readonly getToken: () => Promise<string>,
     readonly siteId: string,
+    /** Chamado quando a API recusa um token ainda válido (autorização revogada pelo vendedor). */
+    private readonly onUnauthorized?: () => Promise<void>,
   ) {}
 
+  private async guard<R>(fn: () => Promise<R>): Promise<R> {
+    try {
+      return await fn();
+    } catch (error) {
+      if (error instanceof MlApiError && error.status === 401 && this.onUnauthorized) await this.onUnauthorized();
+      throw error;
+    }
+  }
+
   private async get<T extends z.ZodType>(path: string, schema: T, query?: Record<string, string | number | undefined>): Promise<z.infer<T>> {
-    const { data } = await this.http.request<unknown>(path, { accessToken: await this.getToken(), query });
+    const { data } = await this.guard(async () => this.http.request<unknown>(path, { accessToken: await this.getToken(), query }));
     return schema.parse(data);
   }
 
@@ -58,12 +70,14 @@ export class MercadoLivreClient {
 
   /** Validação oficial sem publicar. Retorna lista vazia quando válido (HTTP 204). */
   async validateItem(payload: Record<string, unknown>) {
-    await this.http.request("/items/validate", { method: "POST", json: payload, accessToken: await this.getToken(), retry: false });
+    await this.guard(async () => this.http.request("/items/validate", { method: "POST", json: payload, accessToken: await this.getToken(), retry: false }));
   }
 
   /** Publicação real. Nunca repetida automaticamente (não idempotente). */
   async createItem(payload: Record<string, unknown>) {
-    const { data } = await this.http.request<unknown>("/items", { method: "POST", json: payload, accessToken: await this.getToken(), retry: false, timeoutMs: 30_000 });
+    const { data } = await this.guard(async () =>
+      this.http.request<unknown>("/items", { method: "POST", json: payload, accessToken: await this.getToken(), retry: false, timeoutMs: 30_000 }),
+    );
     return itemSchema.parse(data);
   }
 
@@ -82,7 +96,9 @@ export class MercadoLivreClient {
 
   /** PUT com valores absolutos é idempotente: pode ser repetido. */
   async updateItem(itemId: string, patch: { price?: number; available_quantity?: number; status?: "active" | "paused" | "closed" }) {
-    const { data } = await this.http.request<unknown>(`/items/${encodeURIComponent(itemId)}`, { method: "PUT", json: patch, accessToken: await this.getToken(), retry: true });
+    const { data } = await this.guard(async () =>
+      this.http.request<unknown>(`/items/${encodeURIComponent(itemId)}`, { method: "PUT", json: patch, accessToken: await this.getToken(), retry: true }),
+    );
     return itemSchema.parse(data);
   }
 
@@ -98,6 +114,10 @@ export class MercadoLivreClient {
   async searchRecentOrders(sellerId: string, limit = 50) {
     const data = await this.get("/orders/search", z.object({ results: z.array(orderSchema).default([]) }), { seller: sellerId, sort: "date_desc", limit });
     return data.results;
+  }
+
+  getShipment(shipmentId: string) {
+    return this.get(`/shipments/${encodeURIComponent(shipmentId)}`, shipmentSchema);
   }
 
   searchCatalogProducts(query: string) {

@@ -249,14 +249,14 @@ isOneToOne: false
                   ]
                 },"marketplace_listings": {
                   Row: {
-                    "auto_sync_stock": boolean,"available_stock": number | null,"catalog_product_id": string | null,"created_at": string,"external_item_id": string,"external_user_product_id": string | null,"family_name": string | null,"id": string,"last_synced_at": string | null,"listing_draft_id": string | null,"marketplace_account_id": string,"organization_id": string,"permalink": string | null,"price": number | null,"raw": NonNullable<Json>,"status": string,"supplier_offer_id": string | null,"title": string | null,"updated_at": string,"version": number
+                    "auto_sync_stock": boolean,"available_stock": number | null,"catalog_product_id": string | null,"created_at": string,"external_item_id": string,"external_user_product_id": string | null,"family_name": string | null,"id": string,"last_sync_error": string | null,"last_synced_at": string | null,"listing_draft_id": string | null,"marketplace_account_id": string,"organization_id": string,"paused_by_sync": boolean,"permalink": string | null,"price": number | null,"raw": NonNullable<Json>,"status": string,"supplier_offer_id": string | null,"title": string | null,"updated_at": string,"version": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "auto_sync_stock"?: boolean,"available_stock"?: number | null,"catalog_product_id"?: string | null,"created_at"?: string,"external_item_id": string,"external_user_product_id"?: string | null,"family_name"?: string | null,"id"?: string,"last_synced_at"?: string | null,"listing_draft_id"?: string | null,"marketplace_account_id": string,"organization_id": string,"permalink"?: string | null,"price"?: number | null,"raw"?: NonNullable<Json>,"status": string,"supplier_offer_id"?: string | null,"title"?: string | null,"updated_at"?: string,"version"?: number
+                    "auto_sync_stock"?: boolean,"available_stock"?: number | null,"catalog_product_id"?: string | null,"created_at"?: string,"external_item_id": string,"external_user_product_id"?: string | null,"family_name"?: string | null,"id"?: string,"last_sync_error"?: string | null,"last_synced_at"?: string | null,"listing_draft_id"?: string | null,"marketplace_account_id": string,"organization_id": string,"paused_by_sync"?: boolean,"permalink"?: string | null,"price"?: number | null,"raw"?: NonNullable<Json>,"status": string,"supplier_offer_id"?: string | null,"title"?: string | null,"updated_at"?: string,"version"?: number
                   }
                   Update: {
-                    "auto_sync_stock"?: boolean,"available_stock"?: number | null,"catalog_product_id"?: string | null,"created_at"?: string,"external_item_id"?: string,"external_user_product_id"?: string | null,"family_name"?: string | null,"id"?: string,"last_synced_at"?: string | null,"listing_draft_id"?: string | null,"marketplace_account_id"?: string,"organization_id"?: string,"permalink"?: string | null,"price"?: number | null,"raw"?: NonNullable<Json>,"status"?: string,"supplier_offer_id"?: string | null,"title"?: string | null,"updated_at"?: string,"version"?: number
+                    "auto_sync_stock"?: boolean,"available_stock"?: number | null,"catalog_product_id"?: string | null,"created_at"?: string,"external_item_id"?: string,"external_user_product_id"?: string | null,"family_name"?: string | null,"id"?: string,"last_sync_error"?: string | null,"last_synced_at"?: string | null,"listing_draft_id"?: string | null,"marketplace_account_id"?: string,"organization_id"?: string,"paused_by_sync"?: boolean,"permalink"?: string | null,"price"?: number | null,"raw"?: NonNullable<Json>,"status"?: string,"supplier_offer_id"?: string | null,"title"?: string | null,"updated_at"?: string,"version"?: number
                   }
                   Relationships: [
                     {
@@ -855,6 +855,11 @@ isOneToOne: false
                            },
 "fail_sync_job":
 { Args: { "p_backoff_seconds"?: number,"p_error": string,"p_job_id": string,"p_retryable": boolean,"p_worker": string }; Returns: Database["public"]['Enums']["job_status"]
+                           },
+"ingest_marketplace_order":
+{ Args: { "p_account_id": string,"p_order": Json }; Returns: {
+              "created": boolean,"fulfillment": Database["public"]['Enums']["fulfillment_status"],"order_id": string,"problems": (string)[]
+            }[]
                            },
 "mp_claim_refresh":
 { Args: { "p_account_id": string,"p_generation": number,"p_lease_seconds": number }; Returns: boolean
