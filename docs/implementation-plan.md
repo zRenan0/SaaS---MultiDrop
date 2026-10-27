@@ -59,4 +59,10 @@ Status: [x] concluído e verificado · [~] parcial · [ ] pendente · [B] bloque
 - [x] Documentação: billing, privacidade, suporte, testes, deploy
 
 ## Etapa 7: revisão final
-- [ ] Todos os testes, revisão de RLS e rotas públicas, deploy documentado, lista de pendências
+- [x] Build de produção (`pnpm build`) sem erros
+- [x] Varredura pgTAP de RLS, grants, funções privilegiadas e isolamento em todas as tabelas de empresa
+- [x] Revisão das rotas públicas + E2E de segurança; CSP e cabeçalhos
+- [x] Auditoria de dependências (produção sem vulnerabilidades); CLI shadcn movido para devDependencies
+- [x] Estados de carregamento, erro e 404
+- [x] Migrações reaplicadas do zero; tipos gerados conferidos
+- [x] README de instalação, deploy documentado, lista de pendências em docs/progress.md

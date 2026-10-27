@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MultiDrop
 
-## Getting Started
+SaaS multiempresa para vender no Mercado Livre com produtos de vários fornecedores, sem estoque próprio
+(dropshipping quando houver acordo com o fornecedor). Nome exibido configurável por `NEXT_PUBLIC_APP_NAME`.
 
-First, run the development server:
+**Estado:** versão executável com testes automatizados. Integração real com Mercado Livre e provedor de pagamento
+ainda não validadas (ver [docs/progress.md](docs/progress.md)). Não usar em produção antes de concluir a lista de pendências.
 
+## Funcionalidades
+- Empresas, membros, papéis (proprietário, administrador, operador, leitura), convites, isolamento por RLS
+- Catálogo: fornecedores, cadastro manual, importação CSV/XLSX com prévia e relatório de rejeitadas
+- Calculadora de lucro determinística (faixas de tarifa e frete, preço mínimo, preço sugerido, cenários, histórico)
+- Mercado Livre: OAuth com PKCE, tokens cifrados, categorias e atributos, validação oficial, publicação com confirmação,
+  pesquisa de preços no catálogo
+- Pedidos: notificações, fila durável, ingestão idempotente, sincronização de estoque, encaminhamento manual ao fornecedor
+- Planos e limites no banco, cobrança abstrata (sem provedor real), painel do operador, exportação de dados
+
+## Requisitos
+Node.js 22+, pnpm 10, Docker (para o Supabase local).
+
+## Instalação local
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+pnpm db:start                 # sobe Supabase local (Docker) e aplica as migrações
+cp .env.example .env.local    # preencha com os valores de `pnpm supabase status -o env`
+# gere a chave de criptografia:
+node -e "console.log('1:'+require('crypto').randomBytes(32).toString('base64'))"
+pnpm dev                      # http://localhost:3000
+```
+Variáveis mínimas: `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`,
+`SUPABASE_SECRET_KEY`, `TOKEN_ENCRYPTION_KEYS`. Mercado Livre e cobrança são opcionais; as telas mostram o que falta configurar.
+
+Acesso ao painel do operador: crie a conta e rode `pnpm admin:grant seu@email`.
+
+## Testes
+```bash
+pnpm typecheck && pnpm lint
+pnpm test               # unitários
+pnpm test:db            # pgTAP (RLS e regras do banco)
+pnpm test:integration   # API + banco local
+pnpm test:e2e           # Playwright (Mercado Livre SIMULADO; não prova integração real)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Documentação
+| Documento | Conteúdo |
+|---|---|
+| [CLAUDE.md](CLAUDE.md) | Regras permanentes do repositório |
+| [docs/architecture.md](docs/architecture.md) | Arquitetura e módulos |
+| [docs/data-model.md](docs/data-model.md) | Modelo de dados |
+| [docs/security.md](docs/security.md) | Controles de segurança e pendências |
+| [docs/integrations.md](docs/integrations.md) | Mercado Livre e fornecedores |
+| [docs/pricing.md](docs/pricing.md) | Fórmulas da calculadora |
+| [docs/billing.md](docs/billing.md) | Planos, cobrança e como conectar provedor |
+| [docs/privacy.md](docs/privacy.md) | Dados pessoais, retenção, exportação e exclusão |
+| [docs/deployment.md](docs/deployment.md) | Deploy em Supabase + Vercel |
+| [docs/testing.md](docs/testing.md) | Estratégia de testes |
+| [docs/support.md](docs/support.md) | Rotina de suporte e operação |
+| [docs/decisions.md](docs/decisions.md) | Decisões arquiteturais |
+| [docs/progress.md](docs/progress.md) | Progresso, bloqueios e próximos passos |

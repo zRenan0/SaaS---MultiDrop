@@ -1,35 +1,42 @@
 # Progresso
 
 ## Etapa atual
-Etapa 7 (revisão final).
+Etapas 0 a 7 concluídas dentro do que é possível sem credenciais externas. Próximo ciclo: validação real (ver abaixo).
 
 ## Concluído e verificado
-- Etapas 0 a 6 (ver docs/implementation-plan.md). Etapas 4 e 5 validadas só com servidor simulado; teste real pendente.
+Ver docs/implementation-plan.md. Integrações com Mercado Livre (Etapas 4 e 5) verificadas **somente com servidor simulado**.
 
-## Testes (última execução)
+## Testes (última execução completa)
 | Suite | Comando | Resultado |
 |---|---|---|
-| Banco (pgTAP) | `pnpm test:db` | 76/76 aprovados |
+| Typecheck / Lint | `pnpm typecheck && pnpm lint` | sem erros |
+| Build | `pnpm build` | sucesso |
+| Banco (pgTAP) | `pnpm test:db` | 89/89 aprovados |
 | Unitários | `pnpm test` | 69/69 aprovados |
 | Integração | `pnpm test:integration` | 20/20 aprovados |
-| E2E | `pnpm test:e2e` | 13/13 aprovados (Mercado Livre SIMULADO) |
-| Typecheck/Lint | `pnpm typecheck && pnpm lint` | sem erros |
+| E2E | `pnpm test:e2e` | 16/16 aprovados (Mercado Livre SIMULADO) |
+| Dependências | `pnpm audit --prod` | sem vulnerabilidades conhecidas |
 
-## Bloqueios externos
-- Mercado Livre: aplicação no DevCenter, `ML_CLIENT_ID`, `ML_CLIENT_SECRET`, `ML_REDIRECT_URI` (HTTPS público) e usuários de teste.
-- Supabase de produção: projeto não criado (decisão/custo do proprietário). Variáveis: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`.
-- Vercel: projeto não criado. Variáveis adicionais: `TOKEN_ENCRYPTION_KEYS`, `CRON_SECRET`, `NEXT_PUBLIC_APP_URL`.
-- E-mail transacional (convites/confirmação em produção): provedor SMTP a definir no Supabase Auth.
-- Provedor de pagamento: escolha comercial pendente.
-- Fornecedor com API real: nenhum contrato/documentação disponível.
-
-## Próxima tarefa concreta
-Etapa 7: revisão de RLS/grants de todas as tabelas (pgTAP cobrindo tabelas novas), revisão das rotas públicas, varredura de
-dependências, README de instalação, lista final de bloqueios para produção.
+## Bloqueios para produção (dependem do proprietário)
+| Item | O que falta | Variáveis/ações |
+|---|---|---|
+| Mercado Livre | Aplicação no DevCenter, usuário de teste, URL HTTPS pública | `ML_CLIENT_ID`, `ML_CLIENT_SECRET`, `ML_REDIRECT_URI`; configurar URL de notificações |
+| Supabase produção | Projeto criado, migrações aplicadas, `environment = 'production'`, SMTP | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` |
+| Vercel | Projeto, variáveis, plano com cron a cada 5 min (ou agendador externo) | `NEXT_PUBLIC_APP_URL`, `TOKEN_ENCRYPTION_KEYS`, `CRON_SECRET` |
+| Cobrança | Escolha do provedor, credenciais, implementação do adaptador | `BILLING_PROVIDER` + credenciais do provedor (docs/billing.md) |
+| Comercial | Preços e limites definitivos dos planos | tabela `plans` |
+| Jurídico | Termos, privacidade, retenção, DPA, enquadramento tributário | revisão por advogado e contador |
+| Suporte | Canal oficial | atualizar páginas legais e docs/support.md |
+| Fornecedor com API | Contrato e documentação de um fornecedor real | novo adaptador `SupplierAdapter` |
 
 ## Testes reais pendentes (precisam de credenciais)
-- Conectar conta de teste do Mercado Livre, consultar /users/me, confirmar tag `user_product_seller`.
-- /items/validate e POST /items com usuário de teste; confirmar formato de listing_prices para MLB.
-- Renovação de token real (confirmar rotação do refresh token) e busca por `seller_sku`.
-- Notificações reais `orders_v2`/`items`/`shipments` na URL pública; consulta /orders/{id} e /orders/search; PUT de estoque em item User Products.
-- Vercel Cron: plano Hobby só permite execução diária; para a cada 5 min é necessário plano Pro (ou agendador externo chamando `/api/jobs/run` com `CRON_SECRET`).
+- Conectar conta de teste do Mercado Livre; confirmar `/users/me` e a tag `user_product_seller`.
+- `/items/validate` e `POST /items` com usuário de teste; formato de `listing_prices` para MLB; busca por `seller_sku`.
+- Renovação real de token (rotação do refresh token).
+- Notificações reais `orders_v2`/`items`/`shipments`; `/orders/{id}`, `/orders/search`; PUT de estoque em item User Products.
+- Catálogo `/products/search` e `/products/{id}/items` com o token da aplicação.
+
+## Próxima tarefa concreta
+1. Proprietário: criar aplicação no Mercado Livre e ambiente de homologação (Supabase + Vercel).
+2. Executar o roteiro de testes reais acima, registrar evidências em `docs/evidence/` e corrigir divergências de formato.
+3. Escolher o provedor de pagamento e implementar o adaptador.

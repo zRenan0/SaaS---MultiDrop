@@ -15,7 +15,7 @@
 | Rate limit | `public.rate_limit_hit` (Postgres) em login, cadastro, recuperação de senha, OAuth e webhook |
 | Open redirect | `safeNextPath` aceita apenas caminhos internos |
 | CSRF | Server Actions do Next.js validam origem; OAuth usa `state` de uso único vinculado a usuário + organização + cookie httpOnly |
-| XSS | React escapa saída; nenhum `dangerouslySetInnerHTML`; cabeçalhos de segurança em `next.config.ts` |
+| XSS | React escapa saída; nenhum `dangerouslySetInnerHTML`; CSP (`default-src 'self'`, `frame-ancestors 'none'`, `connect-src 'self'`) e cabeçalhos em `next.config.ts` |
 | Logs | `logger` estruturado com remoção de chaves sensíveis e padrões de token |
 | Auditoria | `audit_logs` (por empresa) e `admin_audit_logs` (operador); mudanças de membros auditadas por trigger |
 | Importação de arquivos | Limite de tamanho e linhas, tipos permitidos, neutralização de fórmulas (CSV injection), validação por linha |
@@ -23,9 +23,20 @@
 | Rotas administrativas | `/admin` exige registro em `platform_admins` (consultado no banco, nunca metadado) |
 | Ambientes | `private.app_settings.environment`; adaptador de cobrança de desenvolvimento bloqueado em produção |
 
+## Verificações automatizadas (Etapa 7)
+- `supabase/tests/database/03_security_sweep.test.sql`: RLS em todas as tabelas públicas; nenhum privilégio de `anon`; nenhum privilégio
+  de usuários no schema `private`; funções executáveis por usuários e funções SECURITY DEFINER conferidas contra lista revisada;
+  `search_path` fixo; isolamento de leitura/alteração/exclusão verificado em **todas** as tabelas com `organization_id`.
+- `tests/e2e/security.spec.ts`: cabeçalhos, rotas públicas (payload inválido, tamanho, segredo do cron, webhook de cobrança sem provedor),
+  acesso cruzado a produto e exportação sem segredos.
+- `pnpm audit --prod`: sem vulnerabilidades conhecidas (27/10/2026). Em dependências de desenvolvimento há 1 aviso de severidade baixa
+  (`deepmerge` via CLI `shadcn`, sem correção publicada; não vai para produção).
+
 ## Pendências conhecidas
 - Envio de e-mail transacional (convites) não configurado: link de convite exibido uma vez ao administrador.
-- Varredura automatizada de dependências (ex.: `pnpm audit` no CI) ainda não configurada.
+- CSP usa `'unsafe-inline'` para scripts (Next.js sem nonce). Evolução: CSP com nonce via `proxy.ts`.
+- `pnpm audit` em CI ainda não configurado (não há pipeline de CI no repositório).
+- Rotina de limpeza de `webhook_events`/`sync_jobs` antigos (proposta em docs/privacy.md) não implementada.
 - Revisão de segurança externa (pentest) antes do lançamento comercial.
 
 ## Resposta a incidentes (base)

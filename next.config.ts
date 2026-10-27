@@ -1,6 +1,24 @@
 import type { NextConfig } from "next";
 
+const isDev = process.env.NODE_ENV !== "production";
+
+// O navegador só conversa com a própria aplicação (Supabase e Mercado Livre são chamados no servidor).
+// 'unsafe-inline' em scripts é exigido pelos scripts de hidratação do Next.js sem nonce; 'unsafe-eval' apenas em desenvolvimento.
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: https:",
+  "font-src 'self' data:",
+  `connect-src 'self'${isDev ? " ws: wss:" : ""}`,
+  "frame-ancestors 'none'",
+  "form-action 'self' https://auth.mercadolivre.com.br",
+  "base-uri 'self'",
+  "object-src 'none'",
+].join("; ");
+
 const securityHeaders = [
+  { key: "Content-Security-Policy", value: contentSecurityPolicy },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
