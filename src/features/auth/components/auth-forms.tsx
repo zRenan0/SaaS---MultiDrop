@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Field } from "@/components/forms/field";
 import { FormStatus, fieldError } from "@/components/forms/form-status";
 import { SubmitButton } from "@/components/forms/submit-button";
+import { ServerForm } from "@/components/forms/server-form";
 import {
   forgotPasswordAction,
   resetPasswordAction,
@@ -15,14 +16,14 @@ import {
 } from "@/features/auth/actions";
 
 export function SignInForm({ next, notice }: { next?: string; notice?: string }) {
-  const [state, action] = useActionState(signInAction, null);
+  const [state, action, pending] = useActionState(signInAction, null);
   return (
     <Card>
       <CardHeader>
         <CardTitle>Entrar</CardTitle>
         <CardDescription>Acesse o painel da sua empresa.</CardDescription>
       </CardHeader>
-      <form action={action} noValidate>
+      <ServerForm action={action} pending={pending} noValidate>
         <CardContent className="grid gap-4">
           {notice ? <p className="text-sm text-destructive" role="alert">{notice}</p> : null}
           <FormStatus state={state} />
@@ -45,20 +46,20 @@ export function SignInForm({ next, notice }: { next?: string; notice?: string })
             </Link>
           </div>
         </CardFooter>
-      </form>
+      </ServerForm>
     </Card>
   );
 }
 
 export function SignUpForm() {
-  const [state, action] = useActionState(signUpAction, null);
+  const [state, action, pending] = useActionState(signUpAction, null);
   return (
     <Card>
       <CardHeader>
         <CardTitle>Criar conta</CardTitle>
         <CardDescription>Depois do cadastro você cria ou entra em uma empresa.</CardDescription>
       </CardHeader>
-      <form action={action} noValidate>
+      <ServerForm action={action} pending={pending} noValidate>
         <CardContent className="grid gap-4">
           <FormStatus state={state} />
           <Field label="Nome" htmlFor="fullName" error={fieldError(state, "fullName")}>
@@ -89,20 +90,20 @@ export function SignUpForm() {
             <Link href="/legal/privacidade" className="underline">Política de privacidade</Link>.
           </p>
         </CardFooter>
-      </form>
+      </ServerForm>
     </Card>
   );
 }
 
 export function ForgotPasswordForm() {
-  const [state, action] = useActionState(forgotPasswordAction, null);
+  const [state, action, pending] = useActionState(forgotPasswordAction, null);
   return (
     <Card>
       <CardHeader>
         <CardTitle>Recuperar senha</CardTitle>
         <CardDescription>Enviaremos um link para redefinir sua senha.</CardDescription>
       </CardHeader>
-      <form action={action} noValidate>
+      <ServerForm action={action} pending={pending} noValidate>
         <CardContent className="grid gap-4">
           <FormStatus state={state} />
           <Field label="E-mail" htmlFor="email" error={fieldError(state, "email")}>
@@ -115,20 +116,20 @@ export function ForgotPasswordForm() {
             Voltar ao login
           </Link>
         </CardFooter>
-      </form>
+      </ServerForm>
     </Card>
   );
 }
 
 export function ResetPasswordForm() {
-  const [state, action] = useActionState(resetPasswordAction, null);
+  const [state, action, pending] = useActionState(resetPasswordAction, null);
   return (
     <Card>
       <CardHeader>
         <CardTitle>Nova senha</CardTitle>
         <CardDescription>Defina uma nova senha para sua conta.</CardDescription>
       </CardHeader>
-      <form action={action} noValidate>
+      <ServerForm action={action} pending={pending} noValidate>
         <CardContent className="grid gap-4">
           <FormStatus state={state} />
           <Field label="Nova senha" htmlFor="password" error={fieldError(state, "password")}>
@@ -141,7 +142,7 @@ export function ResetPasswordForm() {
         <CardFooter className="pt-4">
           <SubmitButton className="w-full">Salvar senha</SubmitButton>
         </CardFooter>
-      </form>
+      </ServerForm>
     </Card>
   );
 }

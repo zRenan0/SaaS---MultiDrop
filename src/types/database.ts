@@ -866,6 +866,11 @@ isOneToOne: false
                            },
 "retry_sync_job":
 { Args: { "p_job_id": string }; Returns: boolean
+                           },
+"upsert_catalog_rows":
+{ Args: { "p_connection_id": string,"p_organization_id": string,"p_rows": Json,"p_source": string }; Returns: {
+              "created_offers": number,"created_products": number,"updated_offers": number
+            }[]
                            }
           }
           Enums: {

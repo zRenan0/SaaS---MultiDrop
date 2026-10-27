@@ -6,11 +6,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Field } from "@/components/forms/field";
 import { FormStatus, fieldError } from "@/components/forms/form-status";
 import { SubmitButton } from "@/components/forms/submit-button";
+import { ServerForm } from "@/components/forms/server-form";
 import { acceptInvitationAction, createOrganizationAction } from "@/features/organizations/actions";
 import { slugify } from "@/features/organizations/schemas";
 
 export function CreateOrganizationForm() {
-  const [state, action] = useActionState(createOrganizationAction, null);
+  const [state, action, pending] = useActionState(createOrganizationAction, null);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
@@ -20,7 +21,7 @@ export function CreateOrganizationForm() {
         <CardTitle>Criar empresa</CardTitle>
         <CardDescription>Cada empresa tem dados, integrações e plano próprios.</CardDescription>
       </CardHeader>
-      <form action={action} noValidate>
+      <ServerForm action={action} pending={pending} noValidate>
         <CardContent className="grid gap-4">
           <FormStatus state={state} />
           <Field label="Nome da empresa" htmlFor="name" error={fieldError(state, "name")}>
@@ -51,18 +52,18 @@ export function CreateOrganizationForm() {
         <CardFooter className="pt-4">
           <SubmitButton pendingText="Criando…">Criar empresa</SubmitButton>
         </CardFooter>
-      </form>
+      </ServerForm>
     </Card>
   );
 }
 
 export function AcceptInvitationForm({ token }: { token: string }) {
-  const [state, action] = useActionState(acceptInvitationAction, null);
+  const [state, action, pending] = useActionState(acceptInvitationAction, null);
   return (
-    <form action={action} className="grid gap-4">
+    <ServerForm action={action} pending={pending} className="grid gap-4">
       <FormStatus state={state} />
       <input type="hidden" name="token" value={token} />
       <SubmitButton pendingText="Entrando…">Aceitar convite</SubmitButton>
-    </form>
+    </ServerForm>
   );
 }

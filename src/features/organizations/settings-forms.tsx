@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Field } from "@/components/forms/field";
 import { FormStatus, fieldError } from "@/components/forms/form-status";
 import { SubmitButton } from "@/components/forms/submit-button";
+import { ServerForm } from "@/components/forms/server-form";
 import { ActionForm } from "@/components/forms/action-form";
 import {
   inviteMemberAction,
@@ -20,9 +21,9 @@ import {
 import { ROLE_LABELS, type Role } from "@/features/organizations/roles";
 
 export function OrganizationNameForm({ name, disabled }: { name: string; disabled: boolean }) {
-  const [state, action] = useActionState(updateOrganizationAction, null);
+  const [state, action, pending] = useActionState(updateOrganizationAction, null);
   return (
-    <form action={action} className="grid max-w-md gap-3">
+    <ServerForm action={action} pending={pending} className="grid max-w-md gap-3">
       <FormStatus state={state} />
       <Field label="Nome da empresa" htmlFor="org-name" error={fieldError(state, "name")}>
         <Input id="org-name" name="name" defaultValue={name} disabled={disabled} required />
@@ -32,16 +33,16 @@ export function OrganizationNameForm({ name, disabled }: { name: string; disable
           <SubmitButton>Salvar</SubmitButton>
         </div>
       )}
-    </form>
+    </ServerForm>
   );
 }
 
 export function InviteMemberForm() {
-  const [state, action] = useActionState(inviteMemberAction, null);
+  const [state, action, pending] = useActionState(inviteMemberAction, null);
   const [role, setRole] = useState<Role>("operator");
   const inviteUrl = state?.ok ? state.data?.inviteUrl : undefined;
   return (
-    <form action={action} className="grid gap-3">
+    <ServerForm action={action} pending={pending} className="grid gap-3">
       <FormStatus state={state} />
       <div className="grid gap-3 sm:grid-cols-[1fr_180px_auto] sm:items-end">
         <Field label="E-mail do convidado" htmlFor="invite-email" error={fieldError(state, "email")}>
@@ -75,7 +76,7 @@ export function InviteMemberForm() {
           </Button>
         </div>
       ) : null}
-    </form>
+    </ServerForm>
   );
 }
 

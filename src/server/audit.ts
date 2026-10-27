@@ -2,7 +2,7 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logger } from "@/lib/logging/logger";
 import { redact } from "@/lib/logging/logger";
-import type { Json } from "@/types/database";
+import { asJson } from "@/lib/db-values";
 
 type AuditInput = {
   organizationId: string;
@@ -25,7 +25,7 @@ export async function audit(input: AuditInput): Promise<void> {
       entity_type: input.entityType,
       entity_id: input.entityId ?? null,
       request_id: input.requestId ?? null,
-      metadata: redact(input.metadata ?? {}) as { [key: string]: Json | undefined },
+      metadata: asJson(redact(input.metadata ?? {})),
     });
     if (error) throw error;
   } catch (error) {
@@ -41,7 +41,7 @@ export async function adminAudit(input: Omit<AuditInput, "organizationId" | "req
       action: input.action,
       entity_type: input.entityType,
       entity_id: input.entityId ?? null,
-      metadata: redact(input.metadata ?? {}) as { [key: string]: Json | undefined },
+      metadata: asJson(redact(input.metadata ?? {})),
     });
     if (error) throw error;
   } catch (error) {

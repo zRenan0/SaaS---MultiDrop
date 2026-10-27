@@ -17,10 +17,11 @@ Status: [x] concluído e verificado · [~] parcial · [ ] pendente · [B] bloque
 - [x] `.env.example`
 
 ## Etapa 2: catálogo multifonte
-- [ ] Fornecedores (conexões) e contrato `SupplierAdapter`
-- [ ] Cadastro manual de produto + oferta
-- [ ] Importação CSV/XLSX: mapeamento, prévia, validação, duplicidade, rejeitados, histórico, reimportação
-- [ ] Listagem com busca, filtros, ordenação e paginação
+- [x] Fornecedores (conexões, acordo de despacho) e contrato `SupplierAdapter` (manual, file_import, generic_rest não configurado)
+- [x] Cadastro manual de produto + oferta; oferta adicional por fornecedor; edição com controle otimista
+- [x] Importação CSV/XLSX: mapeamento sugerido, prévia, validação por linha, duplicidade, rejeitados (CSV), histórico, reimportação
+- [x] Gravação em lote transacional (`upsert_catalog_rows`) com deduplicação por SKU/GTIN/título+marca+modelo
+- [x] Listagem com busca (título, marca, SKU, GTIN), filtros (fornecedor, sem estoque), ordenação e paginação
 
 ## Etapa 3: calculadora
 - [ ] Motor determinístico + testes com cálculo independente
