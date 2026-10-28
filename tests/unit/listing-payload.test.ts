@@ -98,8 +98,26 @@ describe("respostas do Mercado Livre", () => {
         ],
         "inválido",
       ),
-    ).toEqual([{ field: "item.attributes.missing_required", message: "The attributes [BRAND] are required", source: "mercado_livre" }]);
+    ).toEqual([{ field: "item.attributes.missing_required", message: "O Mercado Livre exige nesta categoria: BRAND. Preencha em Atributos da categoria e salve.", source: "mercado_livre" }]);
     expect(mlCausesToIssues([], "Falha")).toEqual([{ field: "mercado_livre", message: "Falha", source: "mercado_livre" }]);
+  });
+
+  it("GTIN condicional aceita o motivo de não ter código e traduz o erro do Mercado Livre", () => {
+    const required = requiredAttributesFromCategory([
+      { id: "GTIN", name: "Código universal", tags: { conditional_required: true } },
+      { id: "EMPTY_GTIN_REASON", name: "Motivo", tags: { hidden: true } },
+    ]);
+    expect(required).toEqual([{ id: "GTIN", name: "Código universal", alternatives: ["EMPTY_GTIN_REASON"] }]);
+    const base = { hasAccount: true, accountActive: true, userProductSeller: true, offerStatus: "active", offerStock: 5, requiredAttributes: required };
+    const draft = { title: "x", familyName: "Caixa", categoryId: "MLB1", listingTypeId: "gold_special", condition: "new" as const, pictures: [{ url: "https://a.com/1.jpg", authorized: true }], price: "100", stock: 1, sellerSku: "A" };
+    expect(validateDraftLocally({ ...draft, attributes: [] }, base).map((i) => i.field)).toContain("attribute:GTIN");
+    expect(validateDraftLocally({ ...draft, attributes: [{ id: "EMPTY_GTIN_REASON", value_id: "17055160" }] }, base).map((i) => i.field)).not.toContain("attribute:GTIN");
+    expect(validateDraftLocally({ ...draft, attributes: [{ id: "GTIN", value_name: "7891000315508" }] }, base).map((i) => i.message)).toContain(
+      "Código de barras (GTIN/EAN) inválido: confira os dígitos na embalagem.",
+    );
+    expect(mlCausesToIssues([{ code: "item.attributes.missing_required", message: "The attributes [GTIN] are required for category [MLB3843].", type: "error" }], "x")[0].message).toContain(
+      "código de barras (GTIN/EAN)",
+    );
   });
 
   it("identifica atributos obrigatórios pela tag", () => {

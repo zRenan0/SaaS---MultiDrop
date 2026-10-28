@@ -1,4 +1,4 @@
-import { isSafePublicUrl } from "@/features/catalog/normalize";
+import { isSafePublicUrl, isValidGtin } from "@/features/catalog/normalize";
 import { dec } from "@/lib/money";
 
 export type DraftAttribute = { id: string; name?: string; value_name?: string | null; value_id?: string | null };
@@ -19,7 +19,11 @@ export type DraftForPayload = {
 
 export type ValidationIssue = { field: string; message: string; source: "local" | "mercado_livre" };
 
-export type RequiredAttribute = { id: string; name: string };
+/** `alternatives`: o requisito também é atendido por um destes atributos (ex.: GTIN ou o motivo de não ter GTIN). */
+export type RequiredAttribute = { id: string; name: string; alternatives?: string[] };
+
+/** Atributo do Mercado Livre para informar por que o produto não tem código de barras. */
+export const EMPTY_GTIN_REASON = "EMPTY_GTIN_REASON";
 
 export const ML_TITLE_MAX = 60;
 
@@ -68,11 +72,22 @@ export function validateDraftLocally(
   if (ctx.requiredAttributes === null) {
     if (draft.categoryId) add("attributes", "Não foi possível consultar os atributos obrigatórios da categoria.");
   } else {
+    const filled = (id: string) => {
+      const value = draft.attributes.find((a) => a.id === id);
+      return Boolean(value && (value.value_name?.trim() || value.value_id));
+    };
     for (const attr of ctx.requiredAttributes) {
-      const value = draft.attributes.find((a) => a.id === attr.id);
-      if (!value || (!value.value_name?.trim() && !value.value_id)) add(`attribute:${attr.id}`, `Atributo obrigatório: ${attr.name}.`);
+      if (filled(attr.id) || attr.alternatives?.some(filled)) continue;
+      add(
+        `attribute:${attr.id}`,
+        attr.id === "GTIN" && attr.alternatives?.length
+          ? "Informe o código de barras (GTIN/EAN) ou, se o produto não tiver, escolha o motivo em \"Motivo de GTIN vazio\"."
+          : `Atributo obrigatório: ${attr.name}.`,
+      );
     }
   }
+  const gtin = draft.attributes.find((a) => a.id === "GTIN")?.value_name?.trim();
+  if (gtin && !isValidGtin(gtin)) add("attribute:GTIN", "Código de barras (GTIN/EAN) inválido: confira os dígitos na embalagem.");
   return dedupe(issues);
 }
 
@@ -113,12 +128,29 @@ export function buildItemPayload(draft: DraftForPayload, mode: { userProductSell
 }
 
 /** Converte causas de erro do /items/validate ou /items em problemas exibíveis. */
+/** Traduz as mensagens mais comuns do Mercado Livre e diz onde corrigir; as demais seguem como vieram. */
+function translateMlMessage(message: string): string {
+  const missing = /The attributes \[([^\]]+)\] are required/i.exec(message);
+  if (missing) {
+    const ids = missing[1].split(",").map((id) => id.trim());
+    const parts = ids.map((id) =>
+      id === "GTIN" ? 'código de barras (GTIN/EAN); se o produto não tiver, escolha o motivo em "Motivo de GTIN vazio"' : id,
+    );
+    return `O Mercado Livre exige nesta categoria: ${parts.join("; ")}. Preencha em Atributos da categoria e salve.`;
+  }
+  return message;
+}
+
 export function mlCausesToIssues(causes: { code?: string; message?: string; type?: string }[], fallback: string): ValidationIssue[] {
   const relevant = causes.filter((c) => c.type !== "warning");
-  if (relevant.length === 0) return [{ field: "mercado_livre", message: fallback, source: "mercado_livre" }];
-  return relevant.map((c) => ({ field: c.code ?? "mercado_livre", message: c.message ?? c.code ?? fallback, source: "mercado_livre" as const }));
+  if (relevant.length === 0) return [{ field: "mercado_livre", message: translateMlMessage(fallback), source: "mercado_livre" }];
+  return relevant.map((c) => ({ field: c.code ?? "mercado_livre", message: translateMlMessage(c.message ?? c.code ?? fallback), source: "mercado_livre" as const }));
 }
 
 export function requiredAttributesFromCategory(attrs: { id: string; name: string; tags: Record<string, unknown> }[]): RequiredAttribute[] {
-  return attrs.filter((a) => a.tags.required === true || a.tags.catalog_required === true).map((a) => ({ id: a.id, name: a.name }));
+  // GTIN costuma vir como conditional_required: obrigatório, a menos que se informe o motivo de não ter código.
+  const hasEmptyReason = attrs.some((a) => a.id === EMPTY_GTIN_REASON);
+  return attrs
+    .filter((a) => a.tags.required === true || a.tags.catalog_required === true || (a.id === "GTIN" && a.tags.conditional_required === true))
+    .map((a) => (a.id === "GTIN" && hasEmptyReason ? { id: a.id, name: a.name, alternatives: [EMPTY_GTIN_REASON] } : { id: a.id, name: a.name }));
 }

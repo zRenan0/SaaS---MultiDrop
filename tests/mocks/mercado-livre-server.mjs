@@ -112,6 +112,8 @@ const server = createServer(async (req, res) => {
     return send(res, 200, [
       { id: "BRAND", name: "Marca", value_type: "string", tags: { required: true } },
       { id: "MODEL", name: "Modelo", value_type: "string", tags: { required: true } },
+      { id: "GTIN", name: "Código universal de produto", value_type: "string", tags: { conditional_required: true } },
+      { id: "EMPTY_GTIN_REASON", name: "Motivo de GTIN vazio", value_type: "list", tags: { hidden: true }, values: [{ id: "17055160", name: "O produto não tem código cadastrado" }] },
       { id: "COLOR", name: "Cor", value_type: "list", tags: {}, values: [{ id: "52049", name: "Preto" }, { id: "52055", name: "Branco" }] },
     ]);
   }
@@ -132,6 +134,9 @@ const server = createServer(async (req, res) => {
     const ids = (body.attributes ?? []).map((a) => a.id);
     if (!ids.includes("MODEL")) {
       return send(res, 400, { error: "validation_error", message: "Validation error", cause: [{ code: "item.attributes.missing_required", message: "The attributes [MODEL] are required for category MLB1234", type: "error" }] });
+    }
+    if (!ids.includes("GTIN") && !ids.includes("EMPTY_GTIN_REASON")) {
+      return send(res, 400, { error: "validation_error", message: "Validation error", cause: [{ code: "item.attributes.missing_required", message: "The attributes [GTIN] are required for category [MLB1234]. Check the attribute is present in the attributes list or in all variation's attributes_combination or attributes.", type: "error" }] });
     }
     res.writeHead(204);
     return res.end();

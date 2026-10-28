@@ -73,7 +73,19 @@ test.describe("Mercado Livre (simulado): OAuth, rascunho, validação e publica�
     await page.getByRole("button", { name: "Validar no Mercado Livre" }).click();
     await expect(page.getByTestId("validation-issues")).toContainText("Atributo obrigatório: Modelo.");
 
+    await expect(page.getByTestId("validation-issues")).toContainText("Informe o código de barras (GTIN/EAN) ou, se o produto não tiver, escolha o motivo");
+
+    // GTIN com dígito verificador errado é barrado antes de ir ao Mercado Livre
     await page.getByLabel("Modelo *").fill("BT-10");
+    await page.getByLabel("Código de barras (GTIN/EAN) *").fill("7891000315508");
+    await page.getByRole("button", { name: "Salvar rascunho" }).click();
+    await expect(page.getByText("Rascunho salvo.").first()).toBeVisible();
+    await page.getByRole("button", { name: "Validar no Mercado Livre" }).click();
+    await expect(page.getByTestId("validation-issues")).toContainText("Código de barras (GTIN/EAN) inválido");
+
+    // Produto sem código de barras: informa o motivo
+    await page.getByLabel("Código de barras (GTIN/EAN) *").fill("");
+    await page.getByLabel("Motivo de GTIN vazio").selectOption({ label: "O produto não tem código cadastrado" });
     await page.getByRole("button", { name: "Salvar rascunho" }).click();
     await expect(page.getByText("Rascunho salvo.").first()).toBeVisible();
     await page.getByRole("button", { name: "Validar no Mercado Livre" }).click();

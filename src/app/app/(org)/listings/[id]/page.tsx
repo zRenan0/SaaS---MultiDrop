@@ -15,7 +15,7 @@ import { ProductImages } from "@/features/catalog/components/product-images";
 import type { ProductImage } from "@/features/catalog/images";
 import { DraftActions, DraftEditor, type CategoryAttributeField } from "@/features/listings/components/draft-forms";
 import { draftForPayload, loadDraftContext } from "@/features/listings/service";
-import type { ValidationIssue } from "@/features/listings/payload";
+import { EMPTY_GTIN_REASON, requiredAttributesFromCategory, type ValidationIssue } from "@/features/listings/payload";
 import { Breakdown } from "@/features/pricing/components/breakdown";
 import { evaluatePrice, type PricingRules } from "@/features/pricing/engine";
 import { loadProfiles } from "@/features/pricing/service";
@@ -59,11 +59,30 @@ export default async function DraftPage({ params }: PageProps<"/app/listings/[id
         client.getCategoryAttributes(draft.category_id),
         client.getAvailableListingTypes(draft.account.external_account_id, draft.category_id),
       ]);
+      const required = new Set(requiredAttributesFromCategory(attributes).map((a) => a.id));
       attributeFields = attributes
-        .filter((a) => a.tags.required === true || a.tags.catalog_required === true || ["BRAND", "MODEL", "GTIN"].includes(a.id))
-        .filter((a) => !a.tags.read_only && !a.tags.hidden)
+        .filter((a) => required.has(a.id) || ["BRAND", "MODEL", "GTIN", EMPTY_GTIN_REASON].includes(a.id))
+        .filter((a) => !a.tags.read_only && (!a.tags.hidden || a.id === EMPTY_GTIN_REASON))
         .slice(0, 30)
-        .map((a) => ({ id: a.id, name: a.name, required: a.tags.required === true || a.tags.catalog_required === true, values: a.values.slice(0, 200), hint: a.hint }));
+        .map((a) => ({
+          id: a.id,
+          name: a.id === "GTIN" ? "Código de barras (GTIN/EAN)" : a.id === EMPTY_GTIN_REASON ? "Motivo de GTIN vazio" : a.name,
+          required: required.has(a.id),
+          values: a.values.slice(0, 200),
+          hint:
+            a.id === "GTIN"
+              ? "Número de 8, 12, 13 ou 14 dígitos embaixo do código de barras da embalagem."
+              : a.id === EMPTY_GTIN_REASON
+                ? "Só se o produto não tiver código de barras. Deixe em branco se informou o GTIN."
+                : a.hint,
+        }));
+      // O motivo de GTIN vazio fica logo depois do GTIN.
+      const reason = attributeFields.find((f) => f.id === EMPTY_GTIN_REASON);
+      const gtinIndex = attributeFields.findIndex((f) => f.id === "GTIN");
+      if (reason && gtinIndex >= 0) {
+        attributeFields = attributeFields.filter((f) => f !== reason);
+        attributeFields.splice(gtinIndex + 1, 0, reason);
+      }
       listingTypes = types.available.map((t) => ({ id: t.id, label: LISTING_TYPE_LABELS[t.id] ?? t.name }));
     } catch (error) {
       logger.warn("ml_category_load_failed", { draftId: draft.id, error });
