@@ -145,13 +145,31 @@ const GTIN_REASON_REFUSED =
   "O Mercado Livre não aceitou o motivo de GTIN vazio: a marca informada já tem produtos com código de barras cadastrados, então o GTIN real é obrigatório. Informe o código da embalagem (e apague o motivo) ou, se o produto é de outra marca, corrija a marca.";
 
 /** `sentEmptyGtinReason`: o rascunho enviou o motivo de GTIN vazio (o Mercado Livre o recusa para marcas com GTIN cadastrado). */
-export function mlCausesToIssues(causes: { code?: string; message?: string; type?: string }[], fallback: string, sentEmptyGtinReason = false): ValidationIssue[] {
-  const relevant = causes.filter((c) => c.type !== "warning");
-  if (relevant.length === 0) return [{ field: "mercado_livre", message: translateMlMessage(fallback), source: "mercado_livre" }];
+export function mlCausesToIssues(
+  causes: { code?: string; message?: string; type?: string; cause_id?: number }[],
+  fallback: string,
+  sentEmptyGtinReason = false,
+  errorCode?: string,
+): ValidationIssue[] {
+  const errors = causes.filter((c) => c.type !== "warning");
+  // Sem causas do tipo erro: mostra os avisos (costumam explicar a recusa) e o código devolvido, nunca só "Validation error".
+  const relevant = errors.length > 0 ? errors : causes;
+  if (relevant.length === 0) {
+    const detail = errorCode ? ` (código ${errorCode})` : "";
+    return [
+      {
+        field: "mercado_livre",
+        message: `${translateMlMessage(fallback)}${detail}. O Mercado Livre não detalhou o motivo; confira fotos (link público de imagem), categoria, preço e atributos e valide de novo.`,
+        source: "mercado_livre",
+      },
+    ];
+  }
   return relevant.map((c) => {
     const message = c.message ?? c.code ?? fallback;
     const gtinRefused = sentEmptyGtinReason && c.code === "item.attribute.missing_conditional_required" && /GTIN/.test(message);
-    return { field: c.code ?? "mercado_livre", message: gtinRefused ? GTIN_REASON_REFUSED : translateMlMessage(message), source: "mercado_livre" as const };
+    const text = gtinRefused ? GTIN_REASON_REFUSED : translateMlMessage(message);
+    const code = c.code && text === message && !message.includes(c.code) ? ` [${c.code}]` : "";
+    return { field: c.code ?? "mercado_livre", message: `${c.type === "warning" ? "Aviso: " : ""}${text}${code}`, source: "mercado_livre" as const };
   });
 }
 

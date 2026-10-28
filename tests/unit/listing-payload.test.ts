@@ -99,7 +99,13 @@ describe("respostas do Mercado Livre", () => {
         "inválido",
       ),
     ).toEqual([{ field: "item.attributes.missing_required", message: "O Mercado Livre exige nesta categoria: BRAND. Preencha em Atributos da categoria e salve.", source: "mercado_livre" }]);
-    expect(mlCausesToIssues([], "Falha")).toEqual([{ field: "mercado_livre", message: "Falha", source: "mercado_livre" }]);
+    expect(mlCausesToIssues([], "Validation error", false, "validation_error")[0].message).toBe(
+      "Validation error (código validation_error). O Mercado Livre não detalhou o motivo; confira fotos (link público de imagem), categoria, preço e atributos e valide de novo.",
+    );
+    // Só avisos: são exibidos em vez de esconder o motivo
+    expect(mlCausesToIssues([{ code: "item.pictures.download", message: "picture could not be downloaded", type: "warning" }], "Validation error")).toEqual([
+      { field: "item.pictures.download", message: "Aviso: picture could not be downloaded [item.pictures.download]", source: "mercado_livre" },
+    ]);
   });
 
   it("GTIN condicional aceita o motivo de não ter código e traduz o erro do Mercado Livre", () => {

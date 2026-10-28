@@ -215,7 +215,8 @@ export async function validateDraftAction(formData: FormData): Promise<ActionRes
       await client.validateItem(buildItemPayload(payloadDraft, { userProductSeller: Boolean(draft.account!.user_product_seller), currencyId: "BRL" }));
     } catch (error) {
       if (error instanceof MlApiError && error.status >= 400 && error.status < 500 && !error.isAuthError) {
-        await setDraftValidation(draft, "invalid", mlCausesToIssues(error.causes, error.message, payloadDraft.attributes.some((a) => a.id === EMPTY_GTIN_REASON)));
+        logger.warn("ml_validate_rejected", { draftId: draft.id, status: error.status, errorCode: error.code, causes: error.causes });
+        await setDraftValidation(draft, "invalid", mlCausesToIssues(error.causes, error.message, payloadDraft.attributes.some((a) => a.id === EMPTY_GTIN_REASON), error.code));
         revalidatePath(`/app/listings/${draft.id}`);
         return { ok: false, error: "O Mercado Livre apontou problemas no anúncio. Veja a lista e corrija." };
       }
@@ -274,7 +275,7 @@ export async function publishDraftAction(formData: FormData): Promise<ActionResu
           .update({
             status: "failed",
             last_error: message,
-            validation_errors: asJson(error instanceof MlApiError ? mlCausesToIssues(error.causes, error.message) : []),
+            validation_errors: asJson(error instanceof MlApiError ? mlCausesToIssues(error.causes, error.message, false, error.code) : []),
           })
           .eq("id", draft.id);
         await recordIntegrationError({ organizationId: ctx.organization.id, entityType: "listing_draft", entityId: draft.id, code: error instanceof MlApiError ? error.code : "publish_failed", message, retryable: ambiguous });
