@@ -39,7 +39,7 @@ Ver docs/implementation-plan.md. Integrações com Mercado Livre (Etapas 4 e 5) 
 ## Próxima tarefa concreta
 1. Ambiente de homologação:
    - Supabase criado (projeto `mlzwngvdeywphxcqvicf`, região sa-east-1), 11 migrações aplicadas, `app_settings.environment = 'production'`.
-   - Vercel: o conector não tem permissão para criar projeto (403). Proprietário cria o projeto pelo painel, importando o repositório, e cadastra as variáveis de `.env.example` (segredos gerados por ele, nunca colados no chat).
+   - Vercel: projeto `saa-s-multi-drop` criado pelo proprietário no painel (o conector não tem permissão de escrita nem de leitura de deploys). URL `https://saa-s-multi-drop.vercel.app`, funções em gru1. Verificado em 28/10/2026: `/api/health` 200, cabeçalhos de segurança presentes, `/api/jobs/run` sem segredo responde 401, início do OAuth sem sessão redireciona ao login. Cadastro e login ainda não testados (nenhum usuário no banco).
    - Proprietário: Site URL e Redirect URLs do Supabase Auth apontando para o domínio da Vercel; aplicação no DevCenter do Mercado Livre.
 2. Executar o roteiro de testes reais acima, registrar evidências em `docs/evidence/` e corrigir divergências de formato.
 3. Escolher o provedor de pagamento e implementar o adaptador.
