@@ -12,3 +12,9 @@ Data: 28/10/2026, 13h01 (America/Sao_Paulo). Ambiente: `https://saa-s-multi-drop
 - Tentativas anteriores (27/10 e manhã de 28/10) saíram para o Mercado Livre e não voltaram; o proprietário ajustou a aplicação no DevCenter.
 - A conta conectada é a conta real do proprietário, não um usuário de teste. Publicação, alteração de estoque e qualquer escrita
   devem ser feitas com usuário de teste (`POST /users/test_user`) ou com autorização explícita item a item.
+
+## Usuário de teste (28/10/2026, 14h59)
+- Criado pelo botão "Criar usuário de teste" (POST `/users/test_user`), auditado sem senha.
+- Login no Mercado Livre pediu código de verificação: últimos dígitos do ID do usuário de teste, conforme a documentação oficial.
+- Conectado na empresa "Teste": status `active`, tags `user_product_seller`, `test_user`, `normal`. A conta real foi desconectada
+  dessa empresa e as credenciais dela foram apagadas.
