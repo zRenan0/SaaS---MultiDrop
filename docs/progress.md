@@ -37,6 +37,9 @@ Ver docs/implementation-plan.md. Integrações com Mercado Livre (Etapas 4 e 5) 
 - Catálogo `/products/search` e `/products/{id}/items` com o token da aplicação.
 
 ## Próxima tarefa concreta
-1. Proprietário: criar aplicação no Mercado Livre e ambiente de homologação (Supabase + Vercel).
+1. Ambiente de homologação:
+   - Supabase criado (projeto `mlzwngvdeywphxcqvicf`, região sa-east-1), 11 migrações aplicadas, `app_settings.environment = 'production'`.
+   - Vercel: o conector não tem permissão para criar projeto (403). Proprietário cria o projeto pelo painel, importando o repositório, e cadastra as variáveis de `.env.example` (segredos gerados por ele, nunca colados no chat).
+   - Proprietário: Site URL e Redirect URLs do Supabase Auth apontando para o domínio da Vercel; aplicação no DevCenter do Mercado Livre.
 2. Executar o roteiro de testes reais acima, registrar evidências em `docs/evidence/` e corrigir divergências de formato.
 3. Escolher o provedor de pagamento e implementar o adaptador.
