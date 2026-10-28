@@ -15,7 +15,9 @@ Variáveis (Production): `NEXT_PUBLIC_APP_NAME`, `NEXT_PUBLIC_APP_URL`, `NEXT_PU
 `ML_SITE_ID`, `ML_USE_PKCE`, `CRON_SECRET`, `BILLING_PROVIDER=none`.
 Nunca definir `ML_API_BASE_URL`/`ML_AUTH_BASE_URL` em produção (a aplicação recusa).
 
-Cron: `vercel.json` agenda `/api/jobs/run` a cada 5 minutos (exige plano Pro; no Hobby use agendador externo com `Authorization: Bearer <CRON_SECRET>`).
+Cron: `vercel.json` agenda `/api/jobs/run` uma vez por dia (compatível com o plano Hobby). As notificações já disparam o processamento
+logo após chegarem (`after`). Para varredura a cada 5 minutos: plano Pro com `"schedule": "*/5 * * * *"` ou agendador externo chamando
+`GET /api/jobs/run` com `Authorization: Bearer <CRON_SECRET>`. Funções na região `gru1` (São Paulo), próxima ao Supabase `sa-east-1`.
 
 ## Mercado Livre
 URI de redirecionamento `https://<app>/api/integrations/mercado-livre/callback`; notificações `https://<app>/api/webhooks/mercado-livre`
