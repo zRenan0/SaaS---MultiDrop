@@ -15,6 +15,17 @@ test.describe("autenticação e isolamento entre empresas", () => {
     await expect(page.getByRole("alert").filter({ hasText: "E-mail ou senha inválidos" })).toBeVisible();
   });
 
+  test("link de confirmação aberto em outro navegador orienta a entrar com a senha", async ({ page }) => {
+    await page.goto("/auth/callback?code=codigo-de-outro-navegador&next=/app");
+    await expect(page).toHaveURL(/\/login\?error=outro_navegador/);
+    await expect(page.getByText("Entre com seu e-mail e senha.", { exact: false })).toBeVisible();
+  });
+
+  test("link de recuperação sem sessão continua inválido", async ({ page }) => {
+    await page.goto("/auth/callback?code=codigo-de-outro-navegador&next=/reset-password");
+    await expect(page).toHaveURL(/\/login\?error=link_invalido/);
+  });
+
   test("cadastro valida senha fraca", async ({ page }) => {
     await page.goto("/signup");
     await page.getByLabel("Nome").fill("Fulano");

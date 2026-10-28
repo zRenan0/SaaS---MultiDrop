@@ -11,6 +11,11 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) return NextResponse.redirect(new URL(next, url.origin));
+    // Link aberto em outro navegador (ex.: app de e-mail): o Supabase já confirmou o e-mail antes de redirecionar,
+    // mas sem o code verifier deste navegador não há sessão. Na confirmação de cadastro basta entrar com a senha.
+    if (error.code === "pkce_code_verifier_not_found" && next !== "/reset-password") {
+      return NextResponse.redirect(new URL("/login?error=outro_navegador", url.origin));
+    }
   }
   return NextResponse.redirect(new URL("/login?error=link_invalido", url.origin));
 }
