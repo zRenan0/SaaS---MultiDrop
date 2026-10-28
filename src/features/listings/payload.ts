@@ -105,7 +105,23 @@ function dedupe(issues: ValidationIssue[]) {
  * Corpo do POST /items. No modelo User Products envia `family_name` (o título é gerado pelo ML) e não usa `variations`;
  * no modelo clássico envia `title`. O SKU do fornecedor vai no atributo SELLER_SKU para rastreabilidade e reconciliação.
  */
-export function buildItemPayload(draft: DraftForPayload, mode: { userProductSeller: boolean; currencyId: string }): Record<string, unknown> {
+export type ShippingMode = "me2" | "me1" | "custom";
+
+/**
+ * Modo de envio a declarar no anúncio, a partir dos modos habilitados na conta. ME2 (Mercado Envios) tem prioridade:
+ * no Brasil ele é obrigatório para a maioria dos vendedores e o Mercado Livre recusa anúncios sem ele.
+ */
+export function pickShippingMode(modes: string[]): ShippingMode | null {
+  if (modes.includes("me2")) return "me2";
+  if (modes.includes("me1")) return "me1";
+  if (modes.includes("custom")) return "custom";
+  return null;
+}
+
+export function buildItemPayload(
+  draft: DraftForPayload,
+  mode: { userProductSeller: boolean; currencyId: string; shippingMode?: ShippingMode | null },
+): Record<string, unknown> {
   const attributes = draft.attributes
     .filter((a) => a.id !== "SELLER_SKU" && (a.value_id || a.value_name?.trim()))
     .map((a) => (a.value_id ? { id: a.id, value_id: a.value_id } : { id: a.id, value_name: a.value_name!.trim() }));
@@ -122,6 +138,8 @@ export function buildItemPayload(draft: DraftForPayload, mode: { userProductSell
     pictures: draft.pictures.map((p) => ({ source: p.url })),
     attributes,
   };
+  // Frete grátis obrigatório (quando aplicável) é aplicado pelo próprio Mercado Livre no ME2.
+  if (mode.shippingMode) payload.shipping = { mode: mode.shippingMode, local_pick_up: false, free_shipping: false };
   if (mode.userProductSeller) payload.family_name = draft.familyName?.trim();
   else payload.title = draft.title?.trim();
   return payload;
@@ -130,6 +148,9 @@ export function buildItemPayload(draft: DraftForPayload, mode: { userProductSell
 /** Converte causas de erro do /items/validate ou /items em problemas exibíveis. */
 /** Traduz as mensagens mais comuns do Mercado Livre e diz onde corrigir; as demais seguem como vieram. */
 function translateMlMessage(message: string): string {
+  if (/ME2 adoption is mandatory|has not mode me1/i.test(message)) {
+    return "A conta precisa anunciar com Mercado Envios (ME2). Se este aviso aparecer, a conta não tem o ME2 ativo: ative em Configurações de vendas > Envios no Mercado Livre.";
+  }
   const missing = /The attributes \[([^\]]+)\] are required/i.exec(message);
   if (missing) {
     const ids = missing[1].split(",").map((id) => id.trim());

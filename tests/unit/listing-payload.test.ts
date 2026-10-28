@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildItemPayload, mlCausesToIssues, requiredAttributesFromCategory, validateDraftLocally, type DraftForPayload } from "@/features/listings/payload";
+import { buildItemPayload, mlCausesToIssues, pickShippingMode, requiredAttributesFromCategory, validateDraftLocally, type DraftForPayload } from "@/features/listings/payload";
 
 const draft = (over: Partial<DraftForPayload> = {}): DraftForPayload => ({
   title: "Caixa de Som Bluetooth 10W",
@@ -130,6 +130,15 @@ describe("respostas do Mercado Livre", () => {
     const cause = [{ code: "item.attribute.missing_conditional_required", message: "The attributes [GTIN] are required for category [MLB3843].", type: "error" }];
     expect(mlCausesToIssues(cause, "x", true)[0].message).toContain("não aceitou o motivo de GTIN vazio");
     expect(mlCausesToIssues(cause, "x", false)[0].message).toContain("exige nesta categoria");
+  });
+
+  it("declara Mercado Envios (ME2) quando a conta tem o modo", () => {
+    expect(pickShippingMode(["custom", "not_specified", "me2"])).toBe("me2");
+    expect(pickShippingMode(["me1", "custom"])).toBe("me1");
+    expect(pickShippingMode(["not_specified"])).toBeNull();
+    const payload = buildItemPayload(draft(), { userProductSeller: true, currencyId: "BRL", shippingMode: "me2" });
+    expect(payload.shipping).toEqual({ mode: "me2", local_pick_up: false, free_shipping: false });
+    expect(mlCausesToIssues([{ code: "shipping.me2_adoption_mandatory", message: "ME2 adoption is mandatory for the user", type: "warning" }], "x")[0].message).toContain("Mercado Envios (ME2)");
   });
 
   it("identifica atributos obrigatórios pela tag", () => {

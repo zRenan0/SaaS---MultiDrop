@@ -117,6 +117,9 @@ const server = createServer(async (req, res) => {
       { id: "COLOR", name: "Cor", value_type: "list", tags: {}, values: [{ id: "52049", name: "Preto" }, { id: "52055", name: "Branco" }] },
     ]);
   }
+  if (/^\/users\/\d+\/shipping_preferences$/.test(path)) {
+    return send(res, 200, { local_pick_up: false, modes: ["custom", "not_specified", "me2"], tags: [] });
+  }
   if (/^\/users\/\d+\/available_listing_types$/.test(path)) {
     return send(res, 200, { available: [{ id: "gold_special", name: "Clássico" }, { id: "gold_pro", name: "Premium" }] });
   }
@@ -135,6 +138,12 @@ const server = createServer(async (req, res) => {
     if (!ids.includes("MODEL")) {
       return send(res, 400, { error: "validation_error", message: "Validation error", cause: [{ code: "item.attributes.missing_required", message: "The attributes [MODEL] are required for category MLB1234", type: "error" }] });
     }
+    if (body.shipping?.mode !== "me2") {
+      return send(res, 400, { error: "validation_error", message: "Validation error", cause: [
+        { code: "shipping.lost_me1_by_user", message: "User has not mode me1", type: "warning" },
+        { code: "shipping.me2_adoption_mandatory", message: "ME2 adoption is mandatory for the user", type: "warning" },
+      ] });
+    }
     if (!ids.includes("GTIN") && !ids.includes("EMPTY_GTIN_REASON")) {
       return send(res, 400, { error: "validation_error", message: "Validation error", cause: [{ code: "item.attributes.missing_required", message: "The attributes [GTIN] are required for category [MLB1234]. Check the attribute is present in the attributes list or in all variation's attributes_combination or attributes.", type: "error" }] });
     }
@@ -143,6 +152,9 @@ const server = createServer(async (req, res) => {
   }
   if (path === "/items" && req.method === "POST") {
     const body = JSON.parse(await readBody(req));
+    if (body.shipping?.mode !== "me2") {
+      return send(res, 400, { error: "validation_error", message: "Validation error", cause: [{ code: "shipping.me2_adoption_mandatory", message: "ME2 adoption is mandatory for the user", type: "warning" }] });
+    }
     const id = `MLB${++itemSeq}`;
     const item = {
       id,

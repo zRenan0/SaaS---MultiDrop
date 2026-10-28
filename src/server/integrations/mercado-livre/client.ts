@@ -11,6 +11,7 @@ import {
   listingTypesSchema,
   orderSchema,
   shipmentSchema,
+  shippingPreferencesSchema,
   testUserSchema,
   userSchema,
 } from "@/server/integrations/mercado-livre/schemas";
@@ -61,6 +62,10 @@ export class MercadoLivreClient {
 
   getCategoryAttributes(categoryId: string) {
     return this.get(`/categories/${encodeURIComponent(categoryId)}/attributes`, z.array(categoryAttributeSchema));
+  }
+
+  getShippingPreferences(userId: string) {
+    return this.get(`/users/${encodeURIComponent(userId)}/shipping_preferences`, shippingPreferencesSchema);
   }
 
   getAvailableListingTypes(userId: string, categoryId: string) {

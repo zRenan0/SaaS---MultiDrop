@@ -55,6 +55,11 @@ export const categoryAttributeSchema = z.object({
 });
 export type MlCategoryAttribute = z.infer<typeof categoryAttributeSchema>;
 
+/** GET /users/{id}/shipping_preferences: modos de envio habilitados para o vendedor. */
+export const shippingPreferencesSchema = z.object({
+  modes: z.array(z.string()).optional().default([]),
+});
+
 export const listingTypesSchema = z.object({
   available: z.array(z.object({ id: z.string(), name: z.string() })).optional().default([]),
 });

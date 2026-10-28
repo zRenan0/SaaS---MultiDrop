@@ -14,13 +14,24 @@ import { describeDbError, type ActionResult } from "@/server/errors";
 import { requirePermission } from "@/server/session";
 import { uuidSchema } from "@/features/organizations/schemas";
 import { recordIntegrationError } from "@/features/marketplace/accounts";
-import { buildItemPayload, EMPTY_GTIN_REASON, mlCausesToIssues, requiredAttributesFromCategory, validateDraftLocally, ML_TITLE_MAX, type DraftAttribute, type ValidationIssue } from "@/features/listings/payload";
+import { buildItemPayload, EMPTY_GTIN_REASON, mlCausesToIssues, pickShippingMode, type ShippingMode, requiredAttributesFromCategory, validateDraftLocally, ML_TITLE_MAX, type DraftAttribute, type ValidationIssue } from "@/features/listings/payload";
 import { draftForPayload, loadDraftContext, productPictures, samePictures, validatedPictures, type DraftContext } from "@/features/listings/service";
 import { mlClientForAccount } from "@/server/integrations/mercado-livre/factory";
 import { MlApiError } from "@/server/integrations/mercado-livre/http";
 import { ReauthorizationRequiredError } from "@/server/integrations/mercado-livre/token-manager";
 import { calculate } from "@/features/pricing/engine";
 import { loadProfiles } from "@/features/pricing/service";
+
+/** Modo de envio da conta. Sem resposta da API assume ME2, que é o padrão exigido no Brasil. */
+async function shippingModeFor(client: ReturnType<typeof mlClientForAccount>, userId: string): Promise<{ mode: ShippingMode | null; modes: string[] | null }> {
+  try {
+    const prefs = await client.getShippingPreferences(userId);
+    return { mode: pickShippingMode(prefs.modes), modes: prefs.modes };
+  } catch (error) {
+    logger.warn("ml_shipping_preferences_failed", { error });
+    return { mode: "me2", modes: null };
+  }
+}
 
 function mlErrorMessage(error: unknown): string {
   if (error instanceof ReauthorizationRequiredError) return error.message;
@@ -211,8 +222,17 @@ export async function validateDraftAction(formData: FormData): Promise<ActionRes
       revalidatePath(`/app/listings/${draft.id}`);
       return { ok: false, error: `Corrija ${issues.length} problema(s) antes da validação oficial.` };
     }
+    const shipping = await shippingModeFor(client, draft.account!.external_account_id);
+    if (!shipping.mode) {
+      const issue = { field: "shipping", message: "A conta do Mercado Livre não tem nenhum modo de envio ativo. Ative o Mercado Envios em Configurações de vendas > Envios.", source: "local" as const };
+      await setDraftValidation(draft, "invalid", [issue]);
+      revalidatePath(`/app/listings/${draft.id}`);
+      return { ok: false, error: issue.message };
+    }
     try {
-      await client.validateItem(buildItemPayload(payloadDraft, { userProductSeller: Boolean(draft.account!.user_product_seller), currencyId: "BRL" }));
+      await client.validateItem(
+        buildItemPayload(payloadDraft, { userProductSeller: Boolean(draft.account!.user_product_seller), currencyId: "BRL", shippingMode: shipping.mode }),
+      );
     } catch (error) {
       if (error instanceof MlApiError && error.status >= 400 && error.status < 500 && !error.isAuthError) {
         logger.warn("ml_validate_rejected", { draftId: draft.id, status: error.status, errorCode: error.code, causes: error.causes });
@@ -251,7 +271,8 @@ export async function publishDraftAction(formData: FormData): Promise<ActionResu
 
     const payloadDraft = draftForPayload(draft);
     const client = mlClientForAccount(draft.account.id, draft.account.site_id);
-    const payload = buildItemPayload(payloadDraft, { userProductSeller: Boolean(draft.account.user_product_seller), currencyId: "BRL" });
+    const shipping = await shippingModeFor(client, draft.account.external_account_id);
+    const payload = buildItemPayload(payloadDraft, { userProductSeller: Boolean(draft.account.user_product_seller), currencyId: "BRL", shippingMode: shipping.mode });
     let item;
     try {
       item = await client.createItem(payload);
