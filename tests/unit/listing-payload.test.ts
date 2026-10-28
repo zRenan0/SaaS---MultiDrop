@@ -120,6 +120,12 @@ describe("respostas do Mercado Livre", () => {
     );
   });
 
+  it("explica quando o Mercado Livre recusa o motivo de GTIN vazio", () => {
+    const cause = [{ code: "item.attribute.missing_conditional_required", message: "The attributes [GTIN] are required for category [MLB3843].", type: "error" }];
+    expect(mlCausesToIssues(cause, "x", true)[0].message).toContain("não aceitou o motivo de GTIN vazio");
+    expect(mlCausesToIssues(cause, "x", false)[0].message).toContain("exige nesta categoria");
+  });
+
   it("identifica atributos obrigatórios pela tag", () => {
     expect(
       requiredAttributesFromCategory([

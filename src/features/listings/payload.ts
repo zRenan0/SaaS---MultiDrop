@@ -141,10 +141,18 @@ function translateMlMessage(message: string): string {
   return message;
 }
 
-export function mlCausesToIssues(causes: { code?: string; message?: string; type?: string }[], fallback: string): ValidationIssue[] {
+const GTIN_REASON_REFUSED =
+  "O Mercado Livre não aceitou o motivo de GTIN vazio: a marca informada já tem produtos com código de barras cadastrados, então o GTIN real é obrigatório. Informe o código da embalagem (e apague o motivo) ou, se o produto é de outra marca, corrija a marca.";
+
+/** `sentEmptyGtinReason`: o rascunho enviou o motivo de GTIN vazio (o Mercado Livre o recusa para marcas com GTIN cadastrado). */
+export function mlCausesToIssues(causes: { code?: string; message?: string; type?: string }[], fallback: string, sentEmptyGtinReason = false): ValidationIssue[] {
   const relevant = causes.filter((c) => c.type !== "warning");
   if (relevant.length === 0) return [{ field: "mercado_livre", message: translateMlMessage(fallback), source: "mercado_livre" }];
-  return relevant.map((c) => ({ field: c.code ?? "mercado_livre", message: translateMlMessage(c.message ?? c.code ?? fallback), source: "mercado_livre" as const }));
+  return relevant.map((c) => {
+    const message = c.message ?? c.code ?? fallback;
+    const gtinRefused = sentEmptyGtinReason && c.code === "item.attribute.missing_conditional_required" && /GTIN/.test(message);
+    return { field: c.code ?? "mercado_livre", message: gtinRefused ? GTIN_REASON_REFUSED : translateMlMessage(message), source: "mercado_livre" as const };
+  });
 }
 
 export function requiredAttributesFromCategory(attrs: { id: string; name: string; tags: Record<string, unknown> }[]): RequiredAttribute[] {

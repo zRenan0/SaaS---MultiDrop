@@ -73,7 +73,7 @@ export default async function DraftPage({ params }: PageProps<"/app/listings/[id
             a.id === "GTIN"
               ? "Número de 8, 12, 13 ou 14 dígitos embaixo do código de barras da embalagem."
               : a.id === EMPTY_GTIN_REASON
-                ? "Só se o produto não tiver código de barras. Deixe em branco se informou o GTIN."
+                ? "Só para produto sem código de barras. O Mercado Livre recusa o motivo quando a marca já tem códigos cadastrados (marcas conhecidas)."
                 : a.hint,
         }));
       // O motivo de GTIN vazio fica logo depois do GTIN.

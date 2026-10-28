@@ -14,7 +14,7 @@ import { describeDbError, type ActionResult } from "@/server/errors";
 import { requirePermission } from "@/server/session";
 import { uuidSchema } from "@/features/organizations/schemas";
 import { recordIntegrationError } from "@/features/marketplace/accounts";
-import { buildItemPayload, mlCausesToIssues, requiredAttributesFromCategory, validateDraftLocally, ML_TITLE_MAX, type DraftAttribute, type ValidationIssue } from "@/features/listings/payload";
+import { buildItemPayload, EMPTY_GTIN_REASON, mlCausesToIssues, requiredAttributesFromCategory, validateDraftLocally, ML_TITLE_MAX, type DraftAttribute, type ValidationIssue } from "@/features/listings/payload";
 import { draftForPayload, loadDraftContext, productPictures, samePictures, validatedPictures, type DraftContext } from "@/features/listings/service";
 import { mlClientForAccount } from "@/server/integrations/mercado-livre/factory";
 import { MlApiError } from "@/server/integrations/mercado-livre/http";
@@ -215,7 +215,7 @@ export async function validateDraftAction(formData: FormData): Promise<ActionRes
       await client.validateItem(buildItemPayload(payloadDraft, { userProductSeller: Boolean(draft.account!.user_product_seller), currencyId: "BRL" }));
     } catch (error) {
       if (error instanceof MlApiError && error.status >= 400 && error.status < 500 && !error.isAuthError) {
-        await setDraftValidation(draft, "invalid", mlCausesToIssues(error.causes, error.message));
+        await setDraftValidation(draft, "invalid", mlCausesToIssues(error.causes, error.message, payloadDraft.attributes.some((a) => a.id === EMPTY_GTIN_REASON)));
         revalidatePath(`/app/listings/${draft.id}`);
         return { ok: false, error: "O Mercado Livre apontou problemas no anúncio. Veja a lista e corrija." };
       }
