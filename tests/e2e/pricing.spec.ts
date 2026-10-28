@@ -31,7 +31,7 @@ test("calculadora: parâmetros ausentes, perfil, preço sugerido, cenários e hi
   await newProfile.getByLabel("Margem líquida desejada (%)").fill("15");
   await newProfile.getByLabel("Frete pago a partir do limite (R$)").fill("0");
   await newProfile.getByRole("button", { name: "Criar perfil" }).click();
-  await expect(page.getByText("Perfil salvo.")).toBeVisible();
+  await expect(page.getByText("Perfil salvo.").first()).toBeVisible();
   await page.goto(`/app/pricing?product=${productId}`);
   await expect(page.getByText(/Não é possível calcular: faltam parâmetros/)).toBeVisible();
   await expect(page.getByText("Tarifa de venda do marketplace (%)")).toBeVisible();
@@ -54,7 +54,7 @@ test("calculadora: parâmetros ausentes, perfil, preço sugerido, cenários e hi
   await form.getByLabel("Custo extra 1 (descrição)").fill("Embalagem");
   await form.getByLabel("Valor (R$)").first().fill("2");
   await form.getByRole("button", { name: "Criar perfil" }).click();
-  await expect(page.getByText("Perfil salvo.")).toBeVisible();
+  await expect(page.getByText("Perfil salvo.").first()).toBeVisible();
 
   await page.goto(`/app/pricing?product=${productId}&p1=99,90&p2=129,90`);
   await page.getByLabel("Perfil", { exact: true }).selectOption({ label: "Clássico (padrão)" });

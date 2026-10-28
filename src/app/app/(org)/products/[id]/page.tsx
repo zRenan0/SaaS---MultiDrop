@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PageHeader } from "@/components/layout/page-header";
-import { EmptyState } from "@/components/layout/states";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { createClient } from "@/lib/supabase/server";
 import { dec, formatBRL } from "@/lib/money";
@@ -15,6 +14,8 @@ import { AddOfferForm, DeleteProductButton, EditOfferDialog } from "@/features/c
 import { can } from "@/features/organizations/roles";
 import { requireOrgContext } from "@/server/session";
 import { CompetitorSearchForm } from "@/features/competitors/components";
+import { ProductImages } from "@/features/catalog/components/product-images";
+import type { ProductImage } from "@/features/catalog/images";
 
 export const metadata: Metadata = { title: "Produto" };
 
@@ -53,7 +54,7 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
   ]);
   const competitorPrices = (competitors ?? []).map((c) => Number(c.observed_price)).sort((a, b) => a - b);
 
-  const images = (Array.isArray(product.images) ? product.images : []) as { url?: string; authorized?: boolean }[];
+  const images = (Array.isArray(product.images) ? product.images : []) as ProductImage[];
   const canWrite = can(ctx.role, "catalog.write");
 
   return (
@@ -194,18 +195,7 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
           </CardHeader>
           <CardContent className="grid gap-4 text-sm">
             {product.description ? <p className="whitespace-pre-line text-muted-foreground">{product.description}</p> : <p className="text-muted-foreground">Sem descrição.</p>}
-            {images.length > 0 ? (
-              <ul className="grid gap-1">
-                {images.map((img) => (
-                  <li key={img.url} className="flex items-center gap-2 break-all">
-                    <span className="font-mono text-xs">{img.url}</span>
-                    {img.authorized ? <StatusBadge tone="success">Autorizada</StatusBadge> : <StatusBadge tone="warning">Autorização não confirmada</StatusBadge>}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <EmptyState title="Sem imagens" description="Anúncios exigem imagens autorizadas." className="py-6" />
-            )}
+            <ProductImages productId={product.id} images={images} canWrite={canWrite} />
             <p className="text-xs text-muted-foreground">Criado em {formatDateTime(product.created_at)} · atualizado em {formatDateTime(product.updated_at)}</p>
             {can(ctx.role, "catalog.delete") ? (
               <div>

@@ -83,7 +83,7 @@ test("venda: notificação → fila → pedido único → encaminhamento ao forn
   await page.getByLabel("Código de rastreio").fill("BR123456789");
   await page.getByLabel("URL de rastreio").fill("https://rastreio.exemplo.com.br/BR123456789");
   await page.getByRole("button", { name: "Registrar rastreio" }).click();
-  await expect(page.getByText("Rastreio registrado.")).toBeVisible();
+  await expect(page.getByText("Rastreio registrado.").first()).toBeVisible();
   await page.getByRole("button", { name: "Fornecedor despachou" }).click();
   await expect(page.getByText("Despachado")).toBeVisible();
 

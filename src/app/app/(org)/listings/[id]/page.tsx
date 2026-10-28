@@ -227,7 +227,7 @@ export default async function DraftPage({ params }: PageProps<"/app/listings/[id
             </CardContent>
           </Card>
           {!locked || draft.status === "validated" || draft.status === "failed" ? (
-            <Card>
+            <Card id="validacao" className="scroll-mt-20">
               <CardHeader>
                 <CardTitle className="text-base">Validação e publicação</CardTitle>
                 <CardDescription>

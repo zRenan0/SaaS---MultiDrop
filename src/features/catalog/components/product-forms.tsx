@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { Pencil } from "lucide-react";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -81,7 +82,7 @@ export function NewProductForm({ connections }: { connections: Connection[] }) {
         <Field label="Descrição" htmlFor="description" error={fieldError(state, "description")}>
           <Textarea id="description" name="description" rows={4} />
         </Field>
-        <Field label="URLs das imagens (uma por linha)" htmlFor="imageUrls" error={fieldError(state, "imageUrls")} hint="Somente https. Use apenas imagens que você tem autorização para usar.">
+        <Field label="URLs das imagens (uma por linha)" htmlFor="imageUrls" error={fieldError(state, "imageUrls")} hint="Opcional. Somente https. Depois de salvar, você também pode enviar fotos do computador na página do produto.">
           <Textarea id="imageUrls" name="imageUrls" rows={3} />
         </Field>
         <div className="flex items-start gap-2">
@@ -147,7 +148,10 @@ export function EditOfferDialog({ offer }: { offer: Offer }) {
   const [open, setOpen] = useState(false);
   const [state, action, pending] = useActionState(async (prev: ActionResult | null, formData: FormData) => {
     const result = await updateOfferAction(prev, formData);
-    if (result.ok) setOpen(false);
+    if (result.ok) {
+      setOpen(false);
+      toast.success(result.message ?? "Oferta atualizada.");
+    }
     return result;
   }, null);
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 import { Loader2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -83,6 +83,10 @@ export function DraftEditor({
   locked: boolean;
 }) {
   const [state, action, pending] = useActionState(updateDraftAction, null);
+  // Depois de salvar, leva até o próximo passo (validação), que fica abaixo do formulário.
+  useEffect(() => {
+    if (state?.ok) document.getElementById("validacao")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [state]);
   const [categoryId, setCategoryId] = useState(draft.categoryId ?? "");
   const [suggestions, setSuggestions] = useState<{ id: string; name: string }[]>([]);
   const [predicting, startPredict] = useTransition();

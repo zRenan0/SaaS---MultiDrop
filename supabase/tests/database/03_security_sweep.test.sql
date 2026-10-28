@@ -1,7 +1,7 @@
 -- Varredura de segurança do esquema e isolamento em TODAS as tabelas de empresa.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(13);
+select plan(15);
 
 -- 1. Catálogo do esquema --------------------------------------------------------
 select is(
@@ -198,6 +198,19 @@ select throws_ok(
      values ((select id from public.organizations where slug = 'empresa-a'), gen_random_uuid(), tests.uid('bia@b.test')) $$,
   '42501', null, 'inserção cruzada bloqueada (rascunhos)');
 select tests.logout();
+
+-- Imagens de produto: bucket público só para leitura; gravação apenas por URL assinada do servidor.
+select is(
+  (select row(public, file_size_limit, allowed_mime_types)::text from storage.buckets where id = 'product-images'),
+  row(true, 10485760::bigint, array['image/jpeg', 'image/png', 'image/webp'])::text,
+  'bucket product-images público, até 10 MB, só JPG/PNG/WEBP'
+);
+select is(
+  (select count(*)::int from pg_policies where schemaname = 'storage' and tablename = 'objects'
+     and ('anon' = any(roles) or 'authenticated' = any(roles) or 'public' = any(roles))),
+  0,
+  'nenhuma política em storage.objects para anon/authenticated'
+);
 
 select * from finish();
 rollback;

@@ -2,15 +2,25 @@ import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV !== "production";
 
-// O navegador só conversa com a própria aplicação (Supabase e Mercado Livre são chamados no servidor).
+// Origem do Supabase: o navegador envia imagens de produto direto ao Storage (URL assinada) e exibe as fotos.
+const supabaseOrigin = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").origin;
+  } catch {
+    // Sem a variável (ex.: lint) a política fica restrita à própria aplicação.
+    return "";
+  }
+})();
+
+// O navegador só conversa com a própria aplicação e, para imagens, com o Storage do Supabase.
 // 'unsafe-inline' em scripts é exigido pelos scripts de hidratação do Next.js sem nonce; 'unsafe-eval' apenas em desenvolvimento.
 const contentSecurityPolicy = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: https:",
+  `img-src 'self' data: https:${supabaseOrigin ? ` ${supabaseOrigin}` : ""}`,
   "font-src 'self' data:",
-  `connect-src 'self'${isDev ? " ws: wss:" : ""}`,
+  `connect-src 'self'${supabaseOrigin ? ` ${supabaseOrigin}` : ""}${isDev ? " ws: wss:" : ""}`,
   "frame-ancestors 'none'",
   "form-action 'self' https://auth.mercadolivre.com.br",
   "base-uri 'self'",

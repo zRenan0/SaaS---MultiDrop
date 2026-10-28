@@ -56,20 +56,20 @@ test.describe("Mercado Livre (simulado): OAuth, rascunho, validação e publica�
     await page.getByLabel("Preço de venda (R$)").fill("129,90");
     await page.getByLabel("Estoque a anunciar").fill("5");
     await page.getByRole("button", { name: "Salvar rascunho" }).click();
-    await expect(page.getByText("Rascunho salvo.")).toBeVisible();
+    await expect(page.getByText("Rascunho salvo.").first()).toBeVisible();
     await page.reload();
 
     // Atributos obrigatórios vêm da categoria; Modelo vazio → validação local bloqueia
     await expect(page.getByLabel("Marca *")).toHaveValue("ACME");
     await page.getByLabel("Tipo de anúncio").selectOption("gold_special");
     await page.getByRole("button", { name: "Salvar rascunho" }).click();
-    await expect(page.getByText("Rascunho salvo.")).toBeVisible();
+    await expect(page.getByText("Rascunho salvo.").first()).toBeVisible();
     await page.getByRole("button", { name: "Validar no Mercado Livre" }).click();
     await expect(page.getByTestId("validation-issues")).toContainText("Atributo obrigatório: Modelo.");
 
     await page.getByLabel("Modelo *").fill("BT-10");
     await page.getByRole("button", { name: "Salvar rascunho" }).click();
-    await expect(page.getByText("Rascunho salvo.")).toBeVisible();
+    await expect(page.getByText("Rascunho salvo.").first()).toBeVisible();
     await page.getByRole("button", { name: "Validar no Mercado Livre" }).click();
     await expect(page.getByText("Anúncio validado pelo Mercado Livre (nada foi publicado).")).toBeVisible();
 

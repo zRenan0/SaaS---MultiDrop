@@ -42,6 +42,19 @@ test.describe("catálogo multifonte", () => {
     await page.getByRole("dialog").getByLabel("Custo de aquisição (R$)").fill("41,00");
     await page.getByRole("dialog").getByRole("button", { name: "Salvar" }).click();
     await expect(page.getByRole("cell", { name: "R$ 41,00" }).first()).toBeVisible();
+    await expect(page.getByText("Oferta atualizada.").first()).toBeVisible();
+
+    // Envio de imagem do computador (Storage com URL assinada) e remoção
+    await page.getByLabel("Tenho autorização para usar estas imagens em anúncios.").check();
+    await page.getByLabel("Escolher imagens do produto").setInputFiles(path.join(__dirname, "fixtures/produto.png"));
+    await expect(page.getByText("Imagem adicionada.").first()).toBeVisible();
+    const image = page.getByRole("img", { name: "Imagem do produto" });
+    await expect(image).toBeVisible();
+    await expect(image).toHaveJSProperty("complete", true);
+    expect(await image.evaluate((el: HTMLImageElement) => el.naturalWidth)).toBe(600);
+    await expect(page.getByText("Autorizada")).toBeVisible();
+    await page.getByRole("button", { name: "Remover" }).click();
+    await expect(page.getByRole("img", { name: "Imagem do produto" })).toHaveCount(0);
 
     // Importação CSV
     await page.goto("/app/imports/new");
