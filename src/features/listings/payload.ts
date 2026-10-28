@@ -108,11 +108,12 @@ function dedupe(issues: ValidationIssue[]) {
 export type ShippingMode = "me2" | "me1" | "custom";
 
 /**
- * Modo de envio a declarar no anúncio, a partir dos modos habilitados na conta. ME2 (Mercado Envios) tem prioridade:
- * no Brasil ele é obrigatório para a maioria dos vendedores e o Mercado Livre recusa anúncios sem ele.
+ * Modo de envio a declarar no anúncio. No Brasil o Mercado Livre exige ME2 (Mercado Envios) e recusa ME1 mesmo quando
+ * `shipping_preferences` ainda lista "me1" (erros shipping.lost_me1_by_user / shipping.me2_adoption_mandatory, vistos
+ * em conta real). Por isso ME2 é sempre usado em MLB; em outros sites segue a preferência da conta.
  */
-export function pickShippingMode(modes: string[]): ShippingMode | null {
-  if (modes.includes("me2")) return "me2";
+export function pickShippingMode(modes: string[], siteId = "MLB"): ShippingMode | null {
+  if (siteId === "MLB" || modes.includes("me2")) return "me2";
   if (modes.includes("me1")) return "me1";
   if (modes.includes("custom")) return "custom";
   return null;
@@ -149,7 +150,7 @@ export function buildItemPayload(
 /** Traduz as mensagens mais comuns do Mercado Livre e diz onde corrigir; as demais seguem como vieram. */
 function translateMlMessage(message: string): string {
   if (/ME2 adoption is mandatory|has not mode me1/i.test(message)) {
-    return "A conta precisa anunciar com Mercado Envios (ME2). Se este aviso aparecer, a conta não tem o ME2 ativo: ative em Configurações de vendas > Envios no Mercado Livre.";
+    return "O Mercado Livre exige Mercado Envios (ME2) nesta conta e não o encontrou ativo. Entre no Mercado Livre com esta conta, abra Vendas > Preferências de venda > Envios e ative o Mercado Envios (é preciso ter endereço de despacho cadastrado).";
   }
   const missing = /The attributes \[([^\]]+)\] are required/i.exec(message);
   if (missing) {

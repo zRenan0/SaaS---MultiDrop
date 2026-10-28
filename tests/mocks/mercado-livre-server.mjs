@@ -118,7 +118,7 @@ const server = createServer(async (req, res) => {
     ]);
   }
   if (/^\/users\/\d+\/shipping_preferences$/.test(path)) {
-    return send(res, 200, { local_pick_up: false, modes: ["custom", "not_specified", "me2"], tags: [] });
+    return send(res, 200, { local_pick_up: false, modes: ["custom", "not_specified", "me1"], tags: [] });
   }
   if (/^\/users\/\d+\/available_listing_types$/.test(path)) {
     return send(res, 200, { available: [{ id: "gold_special", name: "Clássico" }, { id: "gold_pro", name: "Premium" }] });

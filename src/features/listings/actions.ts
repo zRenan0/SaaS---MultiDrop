@@ -22,11 +22,11 @@ import { ReauthorizationRequiredError } from "@/server/integrations/mercado-livr
 import { calculate } from "@/features/pricing/engine";
 import { loadProfiles } from "@/features/pricing/service";
 
-/** Modo de envio da conta. Sem resposta da API assume ME2, que é o padrão exigido no Brasil. */
+/** Modo de envio do anúncio (ME2 no Brasil). Sem resposta da API assume ME2. */
 async function shippingModeFor(client: ReturnType<typeof mlClientForAccount>, userId: string): Promise<{ mode: ShippingMode | null; modes: string[] | null }> {
   try {
     const prefs = await client.getShippingPreferences(userId);
-    return { mode: pickShippingMode(prefs.modes), modes: prefs.modes };
+    return { mode: pickShippingMode(prefs.modes, client.siteId), modes: prefs.modes };
   } catch (error) {
     logger.warn("ml_shipping_preferences_failed", { error });
     return { mode: "me2", modes: null };

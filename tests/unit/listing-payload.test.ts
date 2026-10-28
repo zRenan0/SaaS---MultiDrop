@@ -134,11 +134,13 @@ describe("respostas do Mercado Livre", () => {
 
   it("declara Mercado Envios (ME2) quando a conta tem o modo", () => {
     expect(pickShippingMode(["custom", "not_specified", "me2"])).toBe("me2");
-    expect(pickShippingMode(["me1", "custom"])).toBe("me1");
-    expect(pickShippingMode(["not_specified"])).toBeNull();
+    // No Brasil ME2 é obrigatório mesmo que a conta ainda liste me1 (caso real do usuário de teste)
+    expect(pickShippingMode(["me1", "custom"], "MLB")).toBe("me2");
+    expect(pickShippingMode(["me1", "custom"], "MLA")).toBe("me1");
+    expect(pickShippingMode(["not_specified"], "MLA")).toBeNull();
     const payload = buildItemPayload(draft(), { userProductSeller: true, currencyId: "BRL", shippingMode: "me2" });
     expect(payload.shipping).toEqual({ mode: "me2", local_pick_up: false, free_shipping: false });
-    expect(mlCausesToIssues([{ code: "shipping.me2_adoption_mandatory", message: "ME2 adoption is mandatory for the user", type: "warning" }], "x")[0].message).toContain("Mercado Envios (ME2)");
+    expect(mlCausesToIssues([{ code: "shipping.me2_adoption_mandatory", message: "ME2 adoption is mandatory for the user", type: "warning" }], "x")[0].message).toContain("exige Mercado Envios (ME2)");
   });
 
   it("identifica atributos obrigatórios pela tag", () => {
