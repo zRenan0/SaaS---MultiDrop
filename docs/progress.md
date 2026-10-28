@@ -30,7 +30,7 @@ Ver docs/implementation-plan.md. Integrações com Mercado Livre (Etapas 4 e 5) 
 | Fornecedor com API | Contrato e documentação de um fornecedor real | novo adaptador `SupplierAdapter` |
 
 ## Testes reais pendentes (precisam de credenciais)
-- Conectar conta de teste do Mercado Livre; confirmar `/users/me` e a tag `user_product_seller`.
+- ~~Conectar conta do Mercado Livre; confirmar `/users/me` e a tag `user_product_seller`.~~ Feito em 28/10/2026 com a conta real do proprietário (`docs/evidence/2026-10-28-oauth-mercado-livre.md`). Escritas exigem usuário de teste.
 - `/items/validate` e `POST /items` com usuário de teste; formato de `listing_prices` para MLB; busca por `seller_sku`.
 - Renovação real de token (rotação do refresh token).
 - Notificações reais `orders_v2`/`items`/`shipments`; `/orders/{id}`, `/orders/search`; PUT de estoque em item User Products.
