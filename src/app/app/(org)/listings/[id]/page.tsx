@@ -11,6 +11,8 @@ import { formatDateTime } from "@/lib/dates";
 import { logger } from "@/lib/logging/logger";
 import { isSafePublicUrl } from "@/features/catalog/normalize";
 import { DRAFT_STATUS } from "@/features/listings/status";
+import { ProductImages } from "@/features/catalog/components/product-images";
+import type { ProductImage } from "@/features/catalog/images";
 import { DraftActions, DraftEditor, type CategoryAttributeField } from "@/features/listings/components/draft-forms";
 import { draftForPayload, loadDraftContext } from "@/features/listings/service";
 import type { ValidationIssue } from "@/features/listings/payload";
@@ -23,6 +25,8 @@ import { mlClientForAccount } from "@/server/integrations/mercado-livre/factory"
 import { requireOrgContext } from "@/server/session";
 
 export const metadata: Metadata = { title: "Rascunho de anúncio" };
+
+const LISTING_TYPE_LABELS: Record<string, string> = { gold_special: "Clássico", gold_pro: "Premium", free: "Grátis" };
 
 export default async function DraftPage({ params }: PageProps<"/app/listings/[id]">) {
   const { id } = await params;
@@ -60,7 +64,7 @@ export default async function DraftPage({ params }: PageProps<"/app/listings/[id
         .filter((a) => !a.tags.read_only && !a.tags.hidden)
         .slice(0, 30)
         .map((a) => ({ id: a.id, name: a.name, required: a.tags.required === true || a.tags.catalog_required === true, values: a.values.slice(0, 200), hint: a.hint }));
-      listingTypes = types.available.map((t) => ({ id: t.id, label: `${t.name} (${t.id})` }));
+      listingTypes = types.available.map((t) => ({ id: t.id, label: LISTING_TYPE_LABELS[t.id] ?? t.name }));
     } catch (error) {
       logger.warn("ml_category_load_failed", { draftId: draft.id, error });
       categoryError = "Não foi possível carregar atributos e tipos de anúncio do Mercado Livre para esta categoria.";
@@ -153,6 +157,21 @@ export default async function DraftPage({ params }: PageProps<"/app/listings/[id
               </CardContent>
             </Card>
           ) : null}
+          <Card id="fotos" className="scroll-mt-20">
+            <CardHeader>
+              <CardTitle>Fotos</CardTitle>
+              <CardDescription>
+                São as fotos do produto: o que mudar aqui vale para todos os anúncios dele. A primeira é a capa no Mercado Livre.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ProductImages
+                productId={draft.catalog_product_id}
+                images={(Array.isArray(draft.product?.images) ? draft.product.images : []) as ProductImage[]}
+                canWrite={!locked && can(ctx.role, "catalog.write")}
+              />
+            </CardContent>
+          </Card>
           <Card>
             <CardHeader>
               <CardTitle>Dados do anúncio</CardTitle>

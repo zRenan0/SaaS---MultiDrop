@@ -15,7 +15,7 @@ import { requirePermission } from "@/server/session";
 import { uuidSchema } from "@/features/organizations/schemas";
 import { recordIntegrationError } from "@/features/marketplace/accounts";
 import { buildItemPayload, mlCausesToIssues, requiredAttributesFromCategory, validateDraftLocally, ML_TITLE_MAX, type DraftAttribute, type ValidationIssue } from "@/features/listings/payload";
-import { draftForPayload, loadDraftContext, type DraftContext } from "@/features/listings/service";
+import { draftForPayload, loadDraftContext, productPictures, samePictures, validatedPictures, type DraftContext } from "@/features/listings/service";
 import { mlClientForAccount } from "@/server/integrations/mercado-livre/factory";
 import { MlApiError } from "@/server/integrations/mercado-livre/http";
 import { ReauthorizationRequiredError } from "@/server/integrations/mercado-livre/token-manager";
@@ -172,7 +172,13 @@ async function setDraftValidation(draft: DraftContext, status: "validated" | "in
   const admin = createAdminClient();
   await admin
     .from("listing_drafts")
-    .update({ status, validation_errors: asJson(issues), validated_at: status === "validated" ? new Date().toISOString() : null })
+    .update({
+      status,
+      validation_errors: asJson(issues),
+      validated_at: status === "validated" ? new Date().toISOString() : null,
+      // Registra as fotos avaliadas; a publicação exige que continuem as mesmas.
+      pictures: asJson(productPictures(draft)),
+    })
     .eq("id", draft.id)
     .eq("version", draft.version);
 }
@@ -230,6 +236,7 @@ export async function publishDraftAction(formData: FormData): Promise<ActionResu
     if (draft.status !== "validated") return { ok: false, error: "Valide o rascunho antes de publicar." };
     if (!draft.account || draft.account.status !== "active") return { ok: false, error: "Conta do Mercado Livre inativa." };
     if (!draft.offer || draft.offer.available_stock < (draft.target_stock ?? 1)) return { ok: false, error: "Estoque do fornecedor insuficiente. Atualize a oferta." };
+    if (!samePictures(productPictures(draft), validatedPictures(draft))) return { ok: false, error: "As fotos do produto mudaram depois da validação. Valide novamente." };
 
     const admin = createAdminClient();
     const { data: locked } = await admin

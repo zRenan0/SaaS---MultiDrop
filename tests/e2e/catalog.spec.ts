@@ -44,17 +44,23 @@ test.describe("catálogo multifonte", () => {
     await expect(page.getByRole("cell", { name: "R$ 41,00" }).first()).toBeVisible();
     await expect(page.getByText("Oferta atualizada.").first()).toBeVisible();
 
-    // Envio de imagem do computador (Storage com URL assinada) e remoção
-    await page.getByLabel("Tenho autorização para usar estas imagens em anúncios.").check();
-    await page.getByLabel("Escolher imagens do produto").setInputFiles(path.join(__dirname, "fixtures/produto.png"));
-    await expect(page.getByText("Imagem adicionada.").first()).toBeVisible();
-    const image = page.getByRole("img", { name: "Imagem do produto" });
-    await expect(image).toBeVisible();
-    await expect(image).toHaveJSProperty("complete", true);
-    expect(await image.evaluate((el: HTMLImageElement) => el.naturalWidth)).toBe(600);
-    await expect(page.getByText("Autorizada")).toBeVisible();
+    // Fotos: envio bloqueado até confirmar o uso; depois arrasta/escolhe, capa e remoção
+    await expect(page.getByText("Marque a confirmação acima para enviar fotos")).toBeVisible();
+    await page.getByLabel("As fotos que vou enviar são minhas ou o fornecedor autorizou o uso nos anúncios.").check();
+    await page.getByLabel("Escolher fotos do produto").setInputFiles([path.join(__dirname, "fixtures/produto.png"), path.join(__dirname, "fixtures/produto.png")]);
+    await expect(page.getByText("2 fotos adicionadas.").first()).toBeVisible();
+    const first = page.getByRole("img", { name: "Foto 1 do produto" });
+    await expect(first).toBeVisible();
+    await expect(first).toHaveJSProperty("complete", true);
+    expect(await first.evaluate((el: HTMLImageElement) => el.naturalWidth)).toBe(600);
+    await expect(page.getByText("Uso confirmado")).toHaveCount(2);
+    await expect(page.getByText("Capa", { exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Usar como capa" }).click();
+    await expect(page.getByText("Foto de capa definida.").first()).toBeVisible();
+    await page.getByRole("button", { name: "Remover" }).first().click();
+    await expect(page.getByRole("img", { name: /Foto \d do produto/ })).toHaveCount(1);
     await page.getByRole("button", { name: "Remover" }).click();
-    await expect(page.getByRole("img", { name: "Imagem do produto" })).toHaveCount(0);
+    await expect(page.getByRole("img", { name: /Foto \d do produto/ })).toHaveCount(0);
 
     // Importação CSV
     await page.goto("/app/imports/new");

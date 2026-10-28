@@ -59,10 +59,10 @@ export function validateDraftLocally(
   if (draft.stock === null || draft.stock <= 0) add("target_stock", "Informe o estoque a anunciar (maior que zero).");
   else if (ctx.offerStock !== null && draft.stock > ctx.offerStock) add("target_stock", `O estoque anunciado (${draft.stock}) excede o disponível no fornecedor (${ctx.offerStock}).`);
 
-  if (draft.pictures.length === 0) add("pictures", "Inclua ao menos uma imagem.");
+  if (draft.pictures.length === 0) add("pictures", "Envie ao menos uma foto na seção Fotos.");
   for (const p of draft.pictures) {
     if (!isSafePublicUrl(p.url)) add("pictures", `Imagem com URL inválida: ${p.url.slice(0, 80)}`);
-    else if (!p.authorized) add("pictures", "Há imagens sem autorização de uso confirmada.");
+    else if (!p.authorized) add("pictures", "Há fotos com confirmação de uso pendente. Confirme na seção Fotos.");
   }
 
   if (ctx.requiredAttributes === null) {

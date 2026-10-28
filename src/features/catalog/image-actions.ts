@@ -106,3 +106,38 @@ export async function removeProductImageAction(formData: FormData): Promise<Acti
     return { ok: true, message: "Imagem removida." };
   });
 }
+
+const imageUpdateSchema = z.object({
+  productId: z.uuid(),
+  url: z.url().optional(),
+  operation: z.enum(["authorize", "authorize_all", "cover"]),
+});
+
+/** Confirma autorização de uso (uma ou todas) ou define a foto de capa (primeira enviada ao Mercado Livre). */
+export async function updateProductImagesAction(formData: FormData): Promise<ActionResult> {
+  return runAction("catalog.image_update", async () => {
+    const ctx = await requirePermission("catalog.write");
+    const data = parseInput(imageUpdateSchema, {
+      productId: formData.get("productId"),
+      url: formData.get("url") || undefined,
+      operation: formData.get("operation"),
+    });
+    const { supabase, product } = await loadProduct(data.productId, ctx.organization.id);
+    if (!product) return { ok: false, error: "Produto não encontrado." };
+    let images = asImages(product.images);
+    if (data.operation !== "authorize_all" && !images.some((i) => i.url === data.url)) return { ok: false, error: "Imagem não encontrada." };
+    let message: string;
+    if (data.operation === "cover") {
+      images = [...images.filter((i) => i.url === data.url), ...images.filter((i) => i.url !== data.url)];
+      message = "Foto de capa definida.";
+    } else {
+      images = images.map((i) => (data.operation === "authorize_all" || i.url === data.url ? { ...i, authorized: true } : i));
+      message = data.operation === "authorize_all" ? "Uso de todas as fotos confirmado." : "Uso da foto confirmado.";
+    }
+    const { error } = await supabase.from("catalog_products").update({ images: asJson(images) }).eq("id", product.id).eq("organization_id", ctx.organization.id);
+    if (error) return { ok: false, error: describeDbError(error) };
+    await audit({ organizationId: ctx.organization.id, actorUserId: ctx.user.id, action: `catalog.image_${data.operation}`, entityType: "catalog_product", entityId: product.id });
+    revalidatePath(`/app/products/${product.id}`);
+    return { ok: true, message };
+  });
+}

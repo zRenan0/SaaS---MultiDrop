@@ -68,7 +68,7 @@ describe("validação local do rascunho", () => {
         "Informe o preço de venda.",
         "A oferta do fornecedor não está ativa.",
         "O estoque anunciado (20) excede o disponível no fornecedor (8).",
-        "Há imagens sem autorização de uso confirmada.",
+        "Há fotos com confirmação de uso pendente. Confirme na seção Fotos.",
         "Atributo obrigatório: Marca.",
       ]),
     );

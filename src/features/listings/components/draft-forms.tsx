@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState, useTransition } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { Loader2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,11 @@ import {
 import type { DraftAttribute } from "@/features/listings/payload";
 
 type Option = { id: string; label: string };
+
+const DEFAULT_LISTING_TYPES: Option[] = [
+  { id: "gold_special", label: "Clássico" },
+  { id: "gold_pro", label: "Premium" },
+];
 
 export function NewDraftForm({ productId, offers, accounts }: { productId: string; offers: Option[]; accounts: Option[] }) {
   const [state, action, pending] = useActionState(createDraftAction, null);
@@ -83,18 +88,26 @@ export function DraftEditor({
   locked: boolean;
 }) {
   const [state, action, pending] = useActionState(updateDraftAction, null);
-  // Depois de salvar, leva até o próximo passo (validação), que fica abaixo do formulário.
+  // Salvamento automático ao escolher categoria: leva aos atributos. Salvamento manual: leva à validação.
+  const autoSave = useRef(false);
   useEffect(() => {
-    if (state?.ok) document.getElementById("validacao")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (!state?.ok) return;
+    const target = autoSave.current ? "atributos" : "validacao";
+    autoSave.current = false;
+    document.getElementById(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [state]);
+  const formRef = useRef<HTMLFormElement>(null);
   const [categoryId, setCategoryId] = useState(draft.categoryId ?? "");
+  // Sem categoria a API não informa os tipos disponíveis para a conta; mostra os tipos padrão do Brasil.
+  const typeOptions = listingTypes.length ? listingTypes : DEFAULT_LISTING_TYPES;
+  const typeList = draft.listingTypeId && !typeOptions.some((t) => t.id === draft.listingTypeId) ? [...typeOptions, { id: draft.listingTypeId, label: draft.listingTypeId }] : typeOptions;
   const [suggestions, setSuggestions] = useState<{ id: string; name: string }[]>([]);
   const [predicting, startPredict] = useTransition();
   const valueOf = (id: string) => draft.attributes.find((a) => a.id === id);
   const extraAttributes = draft.attributes.filter((a) => !attributeFields.some((f) => f.id === a.id));
 
   return (
-    <ServerForm action={action} pending={pending} className="grid gap-5" noValidate>
+    <ServerForm ref={formRef} action={action} pending={pending} className="grid gap-5" noValidate>
       <FormStatus state={state} />
       <input type="hidden" name="draftId" value={draft.id} />
       <fieldset disabled={locked} className="grid gap-5">
@@ -105,15 +118,15 @@ export function DraftEditor({
               {accounts.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
             </select>
           </Field>
-          <Field label="Tipo de anúncio" htmlFor="listingTypeId" error={fieldError(state, "listingTypeId")} hint={listingTypes.length ? undefined : "Lista oficial disponível após escolher conta e categoria."}>
-            {listingTypes.length ? (
-              <select id="listingTypeId" name="listingTypeId" defaultValue={draft.listingTypeId ?? ""} className="h-8 rounded-lg border bg-background px-2 text-sm">
-                <option value="">Selecione</option>
-                {listingTypes.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
-              </select>
-            ) : (
-              <Input id="listingTypeId" name="listingTypeId" defaultValue={draft.listingTypeId ?? ""} />
-            )}
+          <Field
+            label="Tipo de anúncio"
+            htmlFor="listingTypeId"
+            error={fieldError(state, "listingTypeId")}
+            hint={listingTypes.length ? "Tipos liberados para esta conta e categoria." : "Clássico: tarifa menor. Premium: parcelamento sem juros e tarifa maior."}
+          >
+            <select id="listingTypeId" name="listingTypeId" defaultValue={draft.listingTypeId ?? "gold_special"} className="h-8 rounded-lg border bg-background px-2 text-sm">
+              {typeList.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+            </select>
           </Field>
           <Field label="Condição" htmlFor="condition">
             <select id="condition" name="condition" defaultValue={draft.condition} className="h-8 rounded-lg border bg-background px-2 text-sm">
@@ -166,14 +179,25 @@ export function DraftEditor({
             <ul className="grid gap-1" aria-label="Categorias sugeridas">
               {suggestions.map((s) => (
                 <li key={s.id}>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => setCategoryId(s.id)}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setCategoryId(s.id);
+                      setSuggestions([]);
+                      // Salva na hora para carregar atributos e tipos de anúncio da categoria escolhida.
+                      autoSave.current = true;
+                      setTimeout(() => formRef.current?.requestSubmit(), 0);
+                    }}
+                  >
                     {s.id} · {s.name}
                   </Button>
                 </li>
               ))}
             </ul>
           ) : null}
-          <p className="text-xs text-muted-foreground">Ao mudar a categoria, salve para carregar os atributos exigidos.</p>
+          <p className="text-xs text-muted-foreground">Clique em Sugerir pelo título e escolha uma opção: o rascunho é salvo e os campos exigidos pela categoria aparecem logo abaixo.</p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -186,7 +210,7 @@ export function DraftEditor({
         </div>
 
         {attributeFields.length > 0 ? (
-          <fieldset className="grid gap-3 rounded-lg border p-4">
+          <fieldset id="atributos" className="grid scroll-mt-20 gap-3 rounded-lg border p-4">
             <legend className="px-1 text-sm font-medium">Atributos da categoria</legend>
             <div className="grid gap-3 sm:grid-cols-2">
               {attributeFields.map((f) => {

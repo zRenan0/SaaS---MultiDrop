@@ -189,13 +189,22 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
           </CardContent>
         </Card>
 
+        <Card id="fotos" className="scroll-mt-20">
+          <CardHeader>
+            <CardTitle>Fotos</CardTitle>
+            <CardDescription>Usadas em todos os anúncios deste produto. A primeira é a capa no Mercado Livre.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ProductImages productId={product.id} images={images} canWrite={canWrite} />
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Dados do produto</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 text-sm">
             {product.description ? <p className="whitespace-pre-line text-muted-foreground">{product.description}</p> : <p className="text-muted-foreground">Sem descrição.</p>}
-            <ProductImages productId={product.id} images={images} canWrite={canWrite} />
             <p className="text-xs text-muted-foreground">Criado em {formatDateTime(product.created_at)} · atualizado em {formatDateTime(product.updated_at)}</p>
             {can(ctx.role, "catalog.delete") ? (
               <div>

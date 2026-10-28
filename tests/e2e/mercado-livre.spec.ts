@@ -51,8 +51,14 @@ test.describe("Mercado Livre (simulado): OAuth, rascunho, validação e publica�
     await page.getByRole("link", { name: "Preparar anúncio" }).click();
     await page.getByRole("button", { name: "Criar rascunho" }).click();
     await expect(page).toHaveURL(/\/app\/listings\/[0-9a-f-]{36}$/);
+    // Fotos do produto aparecem no rascunho; tipo de anúncio já tem opções antes da categoria
+    await expect(page.getByRole("img", { name: "Foto 1 do produto" })).toBeVisible();
+    await expect(page.getByText("Uso confirmado")).toBeVisible();
+    await expect(page.getByLabel("Tipo de anúncio")).toHaveValue("gold_special");
+    // Escolher a categoria salva sozinho e carrega os atributos exigidos
     await page.getByRole("button", { name: "Sugerir pelo título" }).click();
     await page.getByRole("button", { name: /MLB1234/ }).click();
+    await expect(page.getByLabel("Marca *")).toHaveValue("ACME");
     await page.getByLabel("Preço de venda (R$)").fill("129,90");
     await page.getByLabel("Estoque a anunciar").fill("5");
     await page.getByRole("button", { name: "Salvar rascunho" }).click();
