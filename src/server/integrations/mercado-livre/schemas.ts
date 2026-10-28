@@ -19,6 +19,15 @@ export const userSchema = z.object({
 });
 export type MlUser = z.infer<typeof userSchema>;
 
+/** Resposta de POST /users/test_user. A senha só é exibida uma vez ao usuário e nunca gravada. */
+export const testUserSchema = z.object({
+  id: z.union([z.number(), z.string()]).transform(String),
+  nickname: z.string(),
+  password: z.string(),
+  email: z.string().optional(),
+  site_status: z.string().optional(),
+});
+
 export const domainDiscoverySchema = z.array(
   z.object({
     domain_id: z.string().optional(),

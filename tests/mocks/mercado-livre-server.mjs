@@ -100,6 +100,11 @@ const server = createServer(async (req, res) => {
   if (!user) return send(res, 401, { error: "invalid_token", message: "invalid access token" });
 
   if (path === "/users/me") return send(res, 200, user);
+  if (path === "/users/test_user" && req.method === "POST") {
+    const body = JSON.parse(await readBody(req));
+    if (body.site_id !== "MLB") return send(res, 400, { error: "bad_request", message: "invalid site_id" });
+    return send(res, 201, { id: 999000111, nickname: "TESTMOCK123", password: "senha-simulada", site_status: "active", email: "test_user_mock@testuser.com" });
+  }
   if (path === "/sites/MLB/domain_discovery/search") {
     return send(res, 200, [{ domain_id: "MLB-SPEAKERS", domain_name: "Caixas de som", category_id: "MLB1234", category_name: "Caixas de Som (simulado)" }]);
   }

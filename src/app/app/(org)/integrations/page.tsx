@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { mercadoLivreConfigStatus } from "@/lib/env";
 import { formatDateTime } from "@/lib/dates";
 import { can } from "@/features/organizations/roles";
-import { AccountActions } from "@/features/marketplace/components";
+import { AccountActions, CreateTestUser } from "@/features/marketplace/components";
 import { requireOrgContext } from "@/server/session";
 
 export const metadata: Metadata = { title: "Mercado Livre" };
@@ -41,7 +41,7 @@ export default async function IntegrationsPage({ searchParams }: PageProps<"/app
   const supabase = await createClient();
   const { data: accounts } = await supabase
     .from("marketplace_accounts")
-    .select("id, external_account_id, nickname, site_id, status, granted_scopes, user_product_seller, last_synced_at, last_error, created_at")
+    .select("id, external_account_id, nickname, site_id, status, granted_scopes, user_product_seller, account_tags, last_synced_at, last_error, created_at")
     .eq("organization_id", ctx.organization.id)
     .order("created_at");
   const canConnect = can(ctx.role, "marketplace.connect");
@@ -127,6 +127,7 @@ export default async function IntegrationsPage({ searchParams }: PageProps<"/app
                     </div>
                   ) : null}
                   {canConnect && a.status !== "disconnected" ? <AccountActions accountId={a.id} nickname={a.nickname ?? a.external_account_id} /> : null}
+                  {canConnect && a.status === "active" && !a.account_tags.includes("test_user") ? <CreateTestUser accountId={a.id} /> : null}
                 </CardContent>
               </Card>
             );

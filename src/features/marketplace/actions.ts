@@ -6,6 +6,7 @@ import { parseInput, runAction } from "@/server/action";
 import { audit } from "@/server/audit";
 import type { ActionResult } from "@/server/errors";
 import { requirePermission } from "@/server/session";
+import { checkRateLimit } from "@/lib/security/rate-limit";
 import { uuidSchema } from "@/features/organizations/schemas";
 import { getAccountForOrg, recordIntegrationError } from "@/features/marketplace/accounts";
 import { mlClientForAccount } from "@/server/integrations/mercado-livre/factory";
@@ -57,6 +58,44 @@ export async function syncAccountAction(formData: FormData): Promise<ActionResul
       await recordIntegrationError({ organizationId: ctx.organization.id, entityType: "marketplace_account", entityId: account.id, code: error instanceof MlApiError ? error.code : "sync_failed", message, retryable: error instanceof MlApiError && error.retryable });
       revalidatePath("/app/integrations");
       return { ok: false, error: message };
+    }
+  });
+}
+
+export type TestUserCredentials = { id: string; nickname: string; password: string; email?: string };
+
+/**
+ * Cria um usuário de teste do Mercado Livre usando a conta conectada. Usuários de teste servem para validar
+ * publicação e vendas sem afetar a conta real. A senha é devolvida uma única vez e não é gravada nem registrada em log.
+ */
+export async function createTestUserAction(formData: FormData): Promise<ActionResult<TestUserCredentials>> {
+  return runAction("marketplace.create_test_user", async () => {
+    const ctx = await requirePermission("marketplace.connect");
+    const accountId = parseInput(uuidSchema, formData.get("accountId"));
+    const account = await getAccountForOrg(accountId, ctx.organization.id);
+    if (account.status !== "active") return { ok: false, error: "A conta precisa estar conectada." };
+    if (!(await checkRateLimit("ml_test_user", account.id, 3, 86_400))) {
+      return { ok: false, error: "Limite de criação de usuários de teste atingido hoje para esta conta." };
+    }
+    try {
+      const created = await mlClientForAccount(account.id, account.site_id).createTestUser();
+      await audit({
+        organizationId: ctx.organization.id,
+        actorUserId: ctx.user.id,
+        action: "marketplace.test_user_created",
+        entityType: "marketplace_account",
+        entityId: account.id,
+        metadata: { test_user_id: created.id, nickname: created.nickname },
+      });
+      return {
+        ok: true,
+        message: "Usuário de teste criado. Copie a senha agora: ela não será exibida de novo.",
+        data: { id: created.id, nickname: created.nickname, password: created.password, email: created.email },
+      };
+    } catch (error) {
+      if (error instanceof ReauthorizationRequiredError) return { ok: false, error: error.message };
+      if (error instanceof MlApiError) return { ok: false, error: `Mercado Livre respondeu ${error.status}: ${error.message}` };
+      throw error;
     }
   });
 }

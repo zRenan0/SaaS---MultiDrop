@@ -11,6 +11,7 @@ import {
   listingTypesSchema,
   orderSchema,
   shipmentSchema,
+  testUserSchema,
   userSchema,
 } from "@/server/integrations/mercado-livre/schemas";
 
@@ -40,6 +41,14 @@ export class MercadoLivreClient {
 
   getMe() {
     return this.get("/users/me", userSchema);
+  }
+
+  /** Cria um usuário de teste do Mercado Livre (limite da plataforma: 10 por conta). Não é repetido automaticamente. */
+  async createTestUser() {
+    const { data } = await this.guard(async () =>
+      this.http.request<unknown>("/users/test_user", { method: "POST", json: { site_id: this.siteId }, accessToken: await this.getToken(), retry: false }),
+    );
+    return testUserSchema.parse(data);
   }
 
   predictCategory(query: string) {

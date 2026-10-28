@@ -38,6 +38,14 @@ test.describe("Mercado Livre (simulado): OAuth, rascunho, validação e publica�
     await page.getByRole("button", { name: "Consultar conta" }).click();
     await expect(page.getByText("Dados da conta atualizados.")).toBeVisible();
 
+    // Usuário de teste: exige confirmação e mostra a senha uma única vez
+    await page.getByRole("button", { name: "Criar usuário de teste" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Criar usuário de teste" }).click();
+    await expect(page.getByText("TESTMOCK123")).toBeVisible();
+    await expect(page.getByText("senha-simulada")).toBeVisible();
+    await page.reload();
+    await expect(page.getByText("senha-simulada")).toHaveCount(0);
+
     // Rascunho
     await page.goto(productUrl);
     await page.getByRole("link", { name: "Preparar anúncio" }).click();
